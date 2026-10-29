@@ -43,6 +43,19 @@ Project configuration (`.cmux/cmux.json`, `.cmux/dock.json`) and standalone Ghos
 configuration (`~/.config/ghostty/`) remain shared inputs. This is settings
 isolation, not a sandbox for filesystem access, cloud accounts or agent tools.
 
+## Development icon
+
+The development catalog uses a downward `V`, made by rotating the existing
+`web/public/cmux-icon.svg` chevron 90 degrees clockwise. The editable source is
+`design/jmin-dev-icon.svg`; the orange `DEV` banner stays upright. Only the Debug
+catalog changes, so this does not replace the installed stable app's icon.
+
+To regenerate its ten catalog sizes with Node.js and `sharp` available:
+
+```sh
+node scripts/generate-jmin-dev-icon.cjs
+```
+
 ## Verification
 
 ```sh
