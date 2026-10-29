@@ -313,7 +313,7 @@ private struct QuickLaunchEditor: View {
         let entry = QuickLaunchEntry(id: draft.id, name: draft.name.trimmingCharacters(in: .whitespacesAndNewlines),
             target: target, openMode: draft.kind == .app ? .native : draft.openMode, symbol: draft.symbol)
         do { try entry.validate() }
-        catch { error = String(localized: "quickLaunch.error.input", defaultValue: "Enter a name and an http:// or https:// address without embedded credentials."); return }
+        catch { self.error = String(localized: "quickLaunch.error.input", defaultValue: "Enter a name and an http:// or https:// address without embedded credentials."); return }
         saving = true
         Task {
             if await model.mutate(.save(entry, replacing: draft.original)) { dismiss() }
