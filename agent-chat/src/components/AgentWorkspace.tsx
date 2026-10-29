@@ -88,18 +88,29 @@ export function AgentWorkspace({ children }: { children: ReactNode }) {
     return () => { cancelled = true; controller.abort(); clearTimeout(timer); };
   }, [endpoint, selection.memberId, selection.collapsed, selection.mode]);
   useEffect(() => {
-    if (error || (snapshot && selection.memberId && !selected)) {
+    const lost = error || (snapshot && selection.memberId && !selected)
+      || (selection.mode === "terminal" && selected && (!selected.terminal || selected.state === "ended"));
+    if (lost) {
       agentWorkspaceNative("dismiss-terminal");
+      if (selection.mode === "terminal") setSelection((s) => ({ ...s, mode: "conversation" }));
     } else if (selection.mode === "terminal" && !selection.collapsed && selected?.terminal) {
       agentWorkspaceNative("terminal", selected);
     }
-  }, [error, snapshot?.id, selected?.id, selected?.sessionId, selected?.surfaceId, selected?.terminal, selection.mode, selection.collapsed]);
+  }, [error, snapshot?.id, selected?.id, selected?.sessionId, selected?.surfaceId, selected?.terminal, selected?.state, selection.mode, selection.collapsed]);
+  useEffect(() => {
+    const bindingLost = (event: Event) => {
+      setSelection((s) => ({ ...s, mode: "conversation" }));
+      if ((event as CustomEvent).detail?.rootInvalid) setError(true);
+    };
+    window.addEventListener("cmux-agent-workspace-binding-lost", bindingLost);
+    return () => window.removeEventListener("cmux-agent-workspace-binding-lost", bindingLost);
+  }, []);
   const select = (member: AgentWorkspaceMember) => setSelection((old) => ({ ...old, memberId: old.memberId === member.id ? null : member.id, mode: member.conversation ? "conversation" : "tools", collapsed: false }));
-  const showTerminal = (member: AgentWorkspaceMember) => { if (member.terminal) agentWorkspaceNative("terminal", member); };
+  const showTerminal = (member: AgentWorkspaceMember) => { if (member.terminal && member.state !== "ended") agentWorkspaceNative("terminal", member); };
   return <section className="agent-workspace" aria-label={t("group")}>
     <header className="agent-workspace-header">
       <strong>{t("main")}</strong>
-      <button type="button" disabled={!snapshot || error} onClick={() => snapshot && showTerminal(snapshot.root)}>{t("terminal")}</button>
+      <button type="button" disabled={!snapshot || error || !snapshot.root.terminal || snapshot.root.state === "ended"} onClick={() => snapshot && showTerminal(snapshot.root)}>{t("terminal")}</button>
       <button type="button" aria-expanded={!selection.collapsed} onClick={() => setSelection((s) => ({ ...s, collapsed: !s.collapsed }))}>{t(selection.collapsed ? "collapsed" : "expanded")}</button>
       <button type="button" onClick={() => agentWorkspaceNative("hide")}>{t("hide")}</button>
     </header>
@@ -116,7 +127,7 @@ export function AgentWorkspace({ children }: { children: ReactNode }) {
           {!selected || detailError ? <p role="status">{t("missing")}</p> : <>
             <div className="agent-workspace-tabs" role="tablist">
               {(["conversation", "tools", "terminal"] as const).map((mode) => <button key={mode} type="button" role="tab" aria-selected={selection.mode === mode}
-                disabled={!selected[mode]} title={!selected[mode] ? t("unavailable") : undefined}
+                disabled={!selected[mode] || (mode === "terminal" && selected.state === "ended")} title={!selected[mode] ? t("unavailable") : undefined}
                 onClick={() => { setSelection((s) => ({ ...s, mode })); if (mode === "terminal" && selection.mode === "terminal") showTerminal(selected); }}>{t(mode)}</button>)}
             </div>
             {selection.mode !== "terminal" && <p className="agent-workspace-hint">{t("readOnly")}</p>}

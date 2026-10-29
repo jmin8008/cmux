@@ -21,6 +21,13 @@ const SESSION_ID = /^[\w-]{8,128}$/;
 const state = (value?: string): AgentWorkspaceMember["state"] =>
   value === "working" || value === "idle" || value === "needsInput" || value === "ended" ? value : "unknown";
 const key = (provider: string, id: string) => `local:${provider}:${id}`;
+// The host lists newest records first. Historical/ended records retain a surface
+// for transcript browsing, but cannot authorize input into its surviving PTY.
+const hasLiveTerminal = (binding: WorkspaceSessionBinding | undefined, bindings: WorkspaceSessionBinding[]) => {
+  if (!binding?.terminalID || binding.state === "ended") return false;
+  const current = bindings.find((b) => b.state !== "ended" && b.terminalID?.toUpperCase() === binding.terminalID?.toUpperCase());
+  return current?.id === binding.id && current?.agentKind === binding.agentKind;
+};
 
 /** Bounded reads keep a large transcript from blocking the sidecar event loop. */
 async function transcript(source: TranscriptSource, child = false, metadataOnly = false): Promise<TranscriptLog> {
@@ -66,7 +73,7 @@ export async function discoverAgentWorkspace(
 ): Promise<{ snapshot: AgentWorkspaceSnapshot; detail(memberId: string): Promise<AgentWorkspaceDetail | null> }> {
   const binding = bindings.find((b) => b.id === root.sessionId && b.agentKind === root.agent
     && b.terminalID?.toUpperCase() === root.surfaceId?.toUpperCase());
-  if (!binding) throw new Error("binding_missing");
+  if (!binding || !hasLiveTerminal(binding, bindings)) throw new Error("binding_missing");
   const rootMember: AgentWorkspaceMember = {
     id: key(root.agent, root.sessionId), provider: root.agent, sessionId: root.sessionId,
     surfaceId: root.surfaceId, label: binding.title || root.sessionId, relationship: "root",
@@ -118,7 +125,7 @@ export async function discoverAgentWorkspace(
       entries.set(id, { source, childTranscript: child?.childTranscript, member: {
         id, provider: "claude", sessionId: teammate.sessionId, surfaceId: b?.terminalID,
         label: teammate.label, relationship: "child", evidence: "team-config", state: state(b?.state),
-        conversation: !!source, tools: !!source, terminal: !!b?.terminalID,
+        conversation: !!source, tools: !!source, terminal: hasLiveTerminal(b, bindings),
       } });
     }
   } else if (root.agent === "codex") {
@@ -131,7 +138,7 @@ export async function discoverAgentWorkspace(
         id, provider: "codex", sessionId: child.id, surfaceId: b?.terminalID,
         label: b?.title || child.label || child.id, relationship: "child", evidence: "thread-spawn",
         state: state(b?.state ?? (child.status === "active" ? "working" : child.status)),
-        conversation: !!source, tools: !!source, terminal: !!b?.terminalID,
+        conversation: !!source, tools: !!source, terminal: hasLiveTerminal(b, bindings),
       } });
     }
   }
@@ -156,7 +163,7 @@ export async function discoverAgentWorkspace(
     entries.set(memberId, { source: source?.agent === "codex" ? source : undefined, member: {
       id: memberId, provider: "codex", sessionId: id, surfaceId: childBinding?.terminalID,
       label: childBinding?.title || id, relationship: "child", evidence: "spawn-result",
-      state: state(childBinding?.state), conversation: !!source, tools: !!source, terminal: !!childBinding?.terminalID,
+      state: state(childBinding?.state), conversation: !!source, tools: !!source, terminal: hasLiveTerminal(childBinding, bindings),
     } });
   }
   // A spawn tool without an addressable child is an observation, not an invented
@@ -178,7 +185,7 @@ export async function discoverAgentWorkspace(
     entries.set(id, { source: source?.agent === b.agentKind ? source : undefined, member: {
       id, provider: b.agentKind, sessionId: b.id, surfaceId: b.terminalID, label: b.title || b.id,
       relationship: "unassigned", evidence: "binding", state: state(b.state), conversation: !!source,
-      tools: !!source, terminal: !!b.terminalID,
+      tools: !!source, terminal: hasLiveTerminal(b, bindings),
     } });
   }
   return {

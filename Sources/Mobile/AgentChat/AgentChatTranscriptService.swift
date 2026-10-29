@@ -27,7 +27,7 @@ final class AgentChatTranscriptService {
     /// Current live prose-stream generation per session, consumed only when a
     /// matching authoritative transcript prose line lands for that turn.
     private var proseTurnStates: [String: ProseTurnState] = [:]
-    private var didShutdown = false
+    private(set) var didShutdown = false
     /// Highest transcript seq observed per session, used to bind live preview
     /// settlement to transcript lines that landed after the prompt started.
     private var latestTranscriptSeqBySessionID: [String: Int] = [:]
@@ -69,6 +69,7 @@ final class AgentChatTranscriptService {
     }
 
     private func publishSidebarChange(liveChanged: Bool, historyChanged: Bool) {
+        notifySessionBindingsChanged()
         guard liveChanged || historyChanged else { return }
         if liveChanged { sidebarLiveRevision &+= 1 }
         if historyChanged { sidebarHistoryRevision &+= 1 }
@@ -159,6 +160,7 @@ final class AgentChatTranscriptService {
     func shutdown() {
         guard !didShutdown else { return }
         didShutdown = true
+        notifySessionBindingsChanged()
         registry.onRecordChanged = nil
         registry.onRecordRemoved = nil
         proseTurnStates.removeAll()
@@ -332,23 +334,6 @@ final class AgentChatTranscriptService {
     func noteExplicitInput(surfaceID: String, at: Date = Date()) -> Int {
         guard !didShutdown else { return 0 }
         return registry.noteUserInput(surfaceID: surfaceID, at: at)
-    }
-
-    /// Lists chat-capable sessions.
-    ///
-    /// - Parameter workspaceID: Workspace UUID string filter, or `nil`.
-    /// - Returns: Wire descriptors, most recent first.
-    func sessionDescriptors(workspaceID: String?) -> [ChatSessionDescriptor] {
-        registry.sessions(workspaceID: workspaceID).map(\.descriptor)
-    }
-
-    /// Lists raw session records for callers that must validate live
-    /// terminal bindings before exposing descriptors.
-    ///
-    /// - Parameter workspaceID: Workspace UUID string filter, or `nil`.
-    /// - Returns: Matching records, most recent first.
-    func sessionRecords(workspaceID: String?) -> [AgentChatSessionRecord] {
-        registry.sessions(workspaceID: workspaceID)
     }
 
     /// Observe-floor detection: discover live codex/claude sessions from the

@@ -35,6 +35,7 @@ tags: [prd3, agent-workspace, implementation]
 - `/api/agent-workspace`는 token prefix·Origin·현재 workspace registry·고정된 루트 ID를 확인한다. 브라우저는 파일 경로를 보낼 수 없고, member ID는 서버가 만든 map에서만 찾는다. child symlink 탈출도 거부한다.
 - root와 같은 workspace의 live direct terminal은 그룹 아래 영역에서 기존 Ghostty renderer를 exclusive lease로 한 번만 표시한다. 원래 tab은 그룹 열기 버튼으로 renderer를 양보한다. panel/PTY/Bonsplit 소유권·UUID는 유지한다. 루트 container selection과 실제 member input target을 분리하며 explicit CLI panel ID는 바꾸지 않는다. 숨길 때 focus/visibility/portal generation을 갱신한다. 그룹 숨기기·member 선택·페이지 갱신은 agent 실행을 소유하지 않는다.
 - `CmuxWebView`를 사용해 기존 copy/paste/undo/responder 경로를 재사용한다. Find 메뉴·팔레트는 현재 웹/터미널 responder에 따라 분기한다. hibernation resume 확인은 그룹 focus보다 먼저 수행한다. workspace 이동 시 그룹 표시를 해제하고 같은 terminal identity를 유지한다.
+- 독립 검토에서 ended record의 surface ID가 남아 이전 멤버로 보이는 raw terminal이 유지되는 문제를 재현했다. terminal capability는 현재 live binding만 허용하며, 선택 멤버가 ended/missing이면 UI는 대화로 돌아간다. native는 service의 동기 변경 통지와 root/member session·provider·live index·PID fence로 이미 mount된 renderer를 해제한다. main composer의 mobile.chat 입력에도 같은 fence를 적용해 종료/교체된 세션의 살아 있는 PTY로 전송하지 않는다. 실제 React ended-state discriminator 통과, native registry 변경 회귀는 app test 실행 대상으로 추가했다.
 - terminal detail 접기는 native lease를 해제하고 다시 펼치면 같은 session/surface를 재검증해 표시한다. 이전 host의 늦은 dismantle은 새 host의 callback을 지우지 못하도록 current owner를 확인한다. workspace/panel close·move·hibernate·group replacement도 lease를 해제한다.
 - 선택·collapse·detail mode는 버전 1 데이터로 **이 앱의 UserDefaults**에 저장한다. 재실행 후 같은 루트에서 그룹을 다시 열면 복원한다. 없어졌던 멤버로의 selection은 유지하고 missing 상태를 보여준다. 자동 agent 재실행은 없다.
 - 본문은 파일당 최근 4 MiB로 제한하고 잘린 기록임을 표시한다. child 탐색은 metadata 64 KiB 및 최대 100개로 제한하며, 캐시는 원본 크기 기준 합계 8 MiB로 제한한다.
@@ -43,15 +44,15 @@ tags: [prd3, agent-workspace, implementation]
 
 - `scripts/verify-local.py --swift-changed`: 17/17 selected checks 통과(2026-10-29). native compilation/launch는 별도 대상이다. source/test wiring과 Swift parse, localization·schema·feature-flag 검증을 포함한다.
 - `agent-chat`: `tsc --noEmit`, `bun run build.ts` 통과.
-- 전체 `bun run test`: 46 assertion scripts 및 20 bun:test files, 136 tests 통과. 정책 테스트가 새 CSS의 `cursor:pointer`를 잡아 `cursor:default`로 수정한 후 전체 재실행 통과.
+- 전체 `bun run test`: 46 assertion scripts 및 20 bun:test files, 137 tests 통과. 정책 테스트가 새 CSS의 `cursor:pointer`를 잡아 `cursor:default`로 수정한 후 전체 재실행 통과.
 - 새 projection suite: 실제 부모/자식 파일, identity/provider 불일치, symlink 탈출, 중복 spawn, background 종료 오판 방지, fork 비병합, Codex trace-only metadata, selection 복원, 20개 locale 검사. Claude Teams 정확한 lead/session 검증 및 Codex out-of-order descendant/foreign-root/fork/stale 검증도 포함한다.
 - React 동작 테스트: 메인 composer mount/초안 유지, A→B 선택 후 늦은 A 응답 차단, trace-only terminal 비활성화, 실행/전송/중단 명령 미발생.
 - 실제 임시 sidecar HTTP 테스트: token 없는 접근 거부, 다른 workspace·바뀐 루트 거부, member path injection 거부, 실제 transcript detail 반환. Origin 거부 assertion이 처음 200으로 실패했고 명시적 검사를 추가한 뒤 403으로 통과했다. 실제 provider 프로세스는 시작하지 않았다.
 - IAB에서 실제 sidecar 페이지를 열어 메인 초안과 child 대화의 동시 표시 및 terminal 비활성화를 확인했다. 화면: `/tmp/cmux-jmin-agents-web-smoke.jpg` (합성 fixture, 실제 사용자 대화가 아님).
-- Swift `CMUXAgentLaunch` package: Xcode toolchain + native build system, `AgentWorkspaceLaunchPolicyTests` 초기 3개 통과(기본/그룹 mode, watcher 환경 전달, 원자적 metadata 저장). 뒤이어 추가한 restore-marker 테스트는 다음 package 실행 대상이다.
+- Swift `CMUXAgentLaunch` package: Xcode toolchain + native build system, `AgentWorkspaceLaunchPolicyTests` 4개 통과(기본/그룹 mode, watcher 환경 전달, 원자적 metadata 저장, restore marker 보존/임의 경로 제외).
 - `tests/test_cli_agent_workspace_teams.py`: feature CLI에 fake Claude와 Codex app-server를 연결해 in-process argv·실제 lineage export·surface.split 미발생을 검증하도록 작성했다. 실제 CLI 생성 후 실행해야 한다.
 - `scripts/localize-changes --base 169da41...`: macOS 새 5개 키 9개 locale 완료, strict catalog 0 parity errors. web feature copy는 agent-chat의 20개 locale로 작성·검사했다.
-- `cmuxTests/AgentWorkspacePresentationTests.swift`를 target에 연결했다: group Find가 숨긴 terminal search로 가지 않는지, 그룹 숨기기/이동 시 panel·surface identity 보존, URL의 루트/workspace 고정을 검사한다. **native app test target은 아직 컴파일·실행 전이다.** `AgentWorkspaceRendererLeaseTests`도 target에 연결했다(9 cases): member 전환/단일 소유권, original ID 타겟 유지, stale callback eligibility, root/member 이동·닫기·hibernation, lease 충돌을 검증한다.
+- `cmuxTests/AgentWorkspacePresentationTests.swift`를 target에 연결했다: group Find가 숨긴 terminal search로 가지 않는지, 그룹 숨기기/이동 시 panel·surface identity 보존, URL의 루트/workspace 고정을 검사한다. **native app test target은 아직 컴파일·실행 전이다.** `AgentWorkspaceRendererLeaseTests`도 target에 연결했다(14 cases): member 전환/단일 소유권, original ID 타겟 유지, stale callback eligibility, root/member 이동·닫기·hibernation, lease 충돌 및 실제 registry에서 root/member 종료·교체·dead PID·서비스 종료 시 동기 lease 해제를 검증한다. `AgentWorkspaceInputBindingTests` 2 cases는 종료/교체된 root의 composer 입력이 surviving PTY에 전달되지 않고 not_found로 거절되는지 확인한다.
 
 ## 남은 범위와 native 검증
 

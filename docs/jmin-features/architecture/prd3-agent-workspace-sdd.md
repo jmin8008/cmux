@@ -182,3 +182,5 @@ Markdown/tool 출력은 데이터로 렌더링하고 임의 script 실행과 혼
 native host spike에서 다른 panel의 Ghostty view를 직접 빌려 오려면 Bonsplit·keyboard responder·portal ownership을 함께 바꿔야 함을 확인했다. 단일 renderer lease를 사용하는 native 통합을 구현했다. 같은 workspace의 live direct terminal은 원래 host를 양보하고 그룹의 root container 아래에서 동일 renderer를 표시한다. explicit CLI target ID와 실행 소유권은 보존한다. Canvas/remote-tmux/cloud/device/hibernating/다른 그룹이 빌린 terminal은 원래 소유 panel에서 focus하는 capability fallback을 유지한다. **native 앱 검증 전에는 그룹 내부 member terminal 호스팅을 완료로 표시하지 않는다.** Claude Teams membership 연결과 grouped Teams 실행에서 자동 pane 증가를 막는 경로는 구현했다. 기존 pane을 파괴하거나 실행 세션 소유권을 바꾸지 않는다. 이 문서의 승인된 요구를 완료된 것으로 낮춰 해석하지 않는다.
 
 메인 composer 유지·멤버 상세 race·identity/capability·인증된 실제 sidecar HTTP 동작과 웹 렌더링은 검증했다. native 앱 빌드/GUI·hibernation·키보드/portal 수명 검증은 Xcode 앱 빌드 후 수행해야 한다. 상세 실행 명령·검증·미완료 목록은 [구현 인계](../implementation/agent-workspace-handoff.md)를 따른다.
+
+2026-10-29 독립 검토 후 입력 수명 보강: terminal panel/PTY가 살아 있어도 선택 세션이 종료·교체되면 입력 권한은 사라진다. 현재 live surface index의 session/provider와 알려진 PID를 검증하고 registry 변경을 동기로 관찰해 renderer lease를 즉시 해제한다. main composer도 같은 binding fence를 거친다. 종료된 record는 대화 기록에만 남고 terminal capability를 얻지 않는다.

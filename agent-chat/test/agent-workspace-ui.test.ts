@@ -6,7 +6,7 @@ import type { AgentWorkspaceSnapshot } from "../agent-workspace-types";
 Object.assign(globalThis, {
   IS_REACT_ACT_ENVIRONMENT: true,
   location: { search: "?group=1&workspace=workspace&surface=surface" },
-  window: { __AGENT_CHAT_BASE__: "/token", webkit: { messageHandlers: { cmuxAgentWorkspace: { postMessage(value: unknown) { messages.push(value); } } } } },
+  window: Object.assign(new EventTarget(), { __AGENT_CHAT_BASE__: "/token", webkit: { messageHandlers: { cmuxAgentWorkspace: { postMessage(value: unknown) { messages.push(value); } } } } }),
 });
 const messages: any[] = [];
 let mounts = 0;
@@ -55,6 +55,16 @@ assert.equal(messages.at(-1).action, "dismiss-terminal", "collapsing the selecte
 await act(async () => { collapse().props.onClick(); });
 assert.equal(messages.at(-1).action, "terminal", "expanding restores only the selected exact terminal binding");
 assert.equal(messages.at(-1).sessionId, "c");
+const beforeEnd = messages.length;
+// Reproduce a stale server capability too: state alone must revoke the renderer.
+snapshot.members = snapshot.members.map((m) => m.id === c.id ? { ...m, state: "ended", terminal: true } : m);
+await act(async () => { await new Promise((resolve) => setTimeout(resolve, 2700)); });
+assert(messages.slice(beforeEnd).some((m) => m.action === "dismiss-terminal"), "ended selected member releases raw input even if its surface survives");
+assert.equal(liveTerminal().props.disabled, true);
+assert(!messages.slice(beforeEnd).some((m) => m.action === "terminal"));
+assert.equal(renderer.root.findAllByType("button").find((n) => n.props.role === "tab" && n.children.includes("Conversation"))?.props["aria-selected"], true);
+await act(async () => { window.dispatchEvent(new CustomEvent("cmux-agent-workspace-binding-lost", { detail: { rootInvalid: true } })); });
+assert.equal(renderer.root.findByType("header").findAllByType("button")[0].props.disabled, true);
 assert(!messages.some((m) => ["send", "start", "spawn", "stop"].includes(m.action)), "projection emits no lifecycle commands");
 await act(async () => renderer.unmount());
 assert.equal(mounts, 0);

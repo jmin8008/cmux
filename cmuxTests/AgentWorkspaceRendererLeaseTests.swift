@@ -1,5 +1,6 @@
 import AppKit
 import Bonsplit
+import CmuxMobileHost
 import Testing
 
 #if canImport(cmux_DEV)
@@ -11,13 +12,25 @@ import Testing
 @MainActor
 @Suite("Agent workspace renderer lease", .serialized)
 struct AgentWorkspaceRendererLeaseTests {
-    private func makeGroup(_ workspace: Workspace, root: TerminalPanel) -> AgentWorkspacePresentation {
+    private func record(_ sessionID: String, panel: TerminalPanel, workspace: Workspace) -> AgentChatSessionRecord {
+        AgentChatSessionRecord(sessionID: sessionID, agentKind: .claude, workspaceID: workspace.id.uuidString,
+            surfaceID: panel.id.uuidString, workingDirectory: nil, transcriptPath: nil, state: .idle,
+            lastActivityAt: Date(), title: nil, pid: nil)
+    }
+
+    private func makeGroup(_ workspace: Workspace, root: TerminalPanel, member: TerminalPanel? = nil,
+                           memberSessionID: String = "member", service: AgentChatTranscriptService? = nil) -> AgentWorkspacePresentation {
+        let records = [record("root-session", panel: root, workspace: workspace)]
+            + (member.map { [record(memberSessionID, panel: $0, workspace: workspace)] } ?? [])
+        let sessionService = service ?? AgentChatTranscriptService(registry: AgentChatSessionRegistry(restoredRecords: records),
+            hasEventSubscribers: { false }, emitEventPayload: { _ in })
         let presentation = AgentWorkspacePresentation(
             workspace: workspace,
             rootPanelID: root.id,
             rootSessionID: "root-session",
             rootProvider: "claude",
-            url: URL(string: "http://127.0.0.1:1/token/terminal/\(root.id.uuidString)")!
+            url: URL(string: "http://127.0.0.1:1/token/terminal/\(root.id.uuidString)")!,
+            sessionService: sessionService
         )
         root.agentWorkspace = presentation
         workspace.focusPanel(root.id)
@@ -32,7 +45,8 @@ struct AgentWorkspaceRendererLeaseTests {
         let member = try #require(workspace.newTerminalSurface(inPane: pane, focus: false))
         let rootSurface = root.surface, memberSurface = member.surface
         let panelIDs = Set(workspace.panels.keys)
-        let group = makeGroup(workspace, root: root)
+        let group = makeGroup(workspace, root: root, member: member, memberSessionID: "member-session")
+        defer { group.sessionService?.shutdown() }
         #expect(group.showTerminal(panel: member, sessionID: "member-session", provider: "claude"))
         let oldLease = try #require(group.rendererLease)
         #expect(oldLease.isCurrent)
@@ -65,9 +79,11 @@ struct AgentWorkspaceRendererLeaseTests {
         let pane = try #require(workspace.paneId(forPanelId: root.id))
         let otherRoot = try #require(workspace.newTerminalSurface(inPane: pane, focus: false))
         let member = try #require(workspace.newTerminalSurface(inPane: pane, focus: false))
-        let first = makeGroup(workspace, root: root)
+        let first = makeGroup(workspace, root: root, member: member)
+        defer { first.sessionService?.shutdown() }
         #expect(first.showTerminal(panel: member, sessionID: "member", provider: "claude"))
-        let second = makeGroup(workspace, root: otherRoot)
+        let second = makeGroup(workspace, root: otherRoot, member: member)
+        defer { second.sessionService?.shutdown() }
         #expect(!second.showTerminal(panel: member, sessionID: "member", provider: "claude"))
         #expect(first.selectedTerminalPanel === member)
         #expect(second.selectedTerminalPanel == nil)
@@ -82,7 +98,8 @@ struct AgentWorkspaceRendererLeaseTests {
         let pane = try #require(workspace.paneId(forPanelId: root.id))
         let member = try #require(workspace.newTerminalSurface(inPane: pane, focus: false))
         let surface = member.surface
-        let group = makeGroup(workspace, root: root)
+        let group = makeGroup(workspace, root: root, member: member)
+        defer { group.sessionService?.shutdown() }
         #expect(group.showTerminal(panel: member, sessionID: "member", provider: "claude"))
         workspace.setPortalRenderingEnabled(false, reason: "test")
         #expect(group.rendererLease == nil)
@@ -102,7 +119,8 @@ struct AgentWorkspaceRendererLeaseTests {
         let root = try #require(workspace.focusedTerminalPanel)
         let pane = try #require(workspace.paneId(forPanelId: root.id))
         let member = try #require(workspace.newTerminalSurface(inPane: pane, focus: false))
-        let group = makeGroup(workspace, root: root)
+        let group = makeGroup(workspace, root: root, member: member)
+        defer { group.sessionService?.shutdown() }
         #expect(group.showTerminal(panel: member, sessionID: "member", provider: "claude"))
         let lease = try #require(group.rendererLease)
         root.agentWorkspace = nil
@@ -164,7 +182,8 @@ struct AgentWorkspaceRendererLeaseTests {
         let root = try #require(workspace.focusedTerminalPanel)
         let pane = try #require(workspace.paneId(forPanelId: root.id))
         let member = try #require(workspace.newTerminalSurface(inPane: pane, focus: false))
-        let group = makeGroup(workspace, root: root)
+        let group = makeGroup(workspace, root: root, member: member)
+        defer { group.sessionService?.shutdown() }
         #expect(group.showTerminal(panel: member, sessionID: "member", provider: "claude"))
         let lease = try #require(group.rendererLease)
         let endpoint = hibernateRoot ? root : member
@@ -185,7 +204,8 @@ struct AgentWorkspaceRendererLeaseTests {
         let root = try #require(workspace.focusedTerminalPanel)
         let pane = try #require(workspace.paneId(forPanelId: root.id))
         let member = try #require(workspace.newTerminalSurface(inPane: pane, focus: false))
-        let group = makeGroup(workspace, root: root)
+        let group = makeGroup(workspace, root: root, member: member)
+        defer { group.sessionService?.shutdown() }
         #expect(group.showTerminal(panel: member, sessionID: "member", provider: "claude"))
         #expect(workspace.agentWorkspaceFocusContainer(forSurfaceID: member.id) == root.id)
         _ = workspace.focusPanelFromTerminalInput(member.id)
@@ -213,10 +233,76 @@ struct AgentWorkspaceRendererLeaseTests {
         let root = try #require(workspace.focusedTerminalPanel)
         let foreign = try #require(otherWorkspace.focusedTerminalPanel)
         let group = makeGroup(workspace, root: root)
+        defer { group.sessionService?.shutdown() }
         #expect(!group.showTerminal(panel: foreign, sessionID: "foreign", provider: "claude"))
         #expect(!group.showTerminal(panel: root, sessionID: "replaced-session", provider: "claude"))
         #expect(!group.showTerminal(panel: root, sessionID: "root-session", provider: "codex"))
         #expect(group.rendererLease == nil)
         #expect(foreign.agentWorkspaceRendererLease == nil)
     }
+
+    @Test(arguments: [false, true])
+    func endingEitherSessionSynchronouslyReleasesInput(endsRoot: Bool) throws {
+        let workspace = Workspace()
+        defer { workspace.teardownAllPanels() }
+        let root = try #require(workspace.focusedTerminalPanel)
+        let pane = try #require(workspace.paneId(forPanelId: root.id))
+        let member = try #require(workspace.newTerminalSurface(inPane: pane, focus: false))
+        let group = makeGroup(workspace, root: root, member: member)
+        let service = try #require(group.sessionService)
+        defer { service.shutdown() }
+        #expect(group.showTerminal(panel: member, sessionID: "member", provider: "claude"))
+        let lease = try #require(group.rendererLease)
+        service.registry.update(sessionID: endsRoot ? "root-session" : "member") { $0.state = .ended }
+        // No event-loop turn or web poll is needed to revoke an already focused renderer.
+        #expect(group.rendererLease == nil)
+        #expect(member.agentWorkspaceRendererLease == nil)
+        #expect(!member.hostedView.debugPortalVisibleInUI)
+        #expect(!lease.isCurrent)
+        #expect(!lease.ownsPortal(in: pane))
+        #expect(!group.showTerminal(panel: member, sessionID: "member", provider: "claude"))
+    }
+
+    @Test(arguments: [false, true])
+    func replacingEitherSessionDoesNotRetargetItsSurvivingPTY(replacesRoot: Bool) throws {
+        let workspace = Workspace()
+        defer { workspace.teardownAllPanels() }
+        let root = try #require(workspace.focusedTerminalPanel)
+        let pane = try #require(workspace.paneId(forPanelId: root.id))
+        let member = try #require(workspace.newTerminalSurface(inPane: pane, focus: false))
+        let group = makeGroup(workspace, root: root, member: member)
+        let service = try #require(group.sessionService)
+        defer { service.shutdown() }
+        #expect(group.showTerminal(panel: member, sessionID: "member", provider: "claude"))
+        let surface = member.surface
+        let endpoint = replacesRoot ? root : member
+        service.registry.noteResumeInitiated(sessionID: "replacement", source: "claude",
+            surfaceID: endpoint.id.uuidString, workspaceID: workspace.id.uuidString, workingDirectory: nil)
+        #expect(group.rendererLease == nil)
+        #expect(member.agentWorkspaceRendererLease == nil)
+        #expect(member.surface === surface)
+        #expect(!group.showTerminal(panel: member, sessionID: "member", provider: "claude"))
+        #expect(service.registry.liveSessionSnapshot(surfaceID: endpoint.id.uuidString)?.sessionID == "replacement")
+    }
+
+    @Test func wrongProviderKnownDeadPIDAndShutdownCannotAuthorizeInput() throws {
+        let workspace = Workspace()
+        defer { workspace.teardownAllPanels() }
+        let root = try #require(workspace.focusedTerminalPanel)
+        let pane = try #require(workspace.paneId(forPanelId: root.id))
+        let member = try #require(workspace.newTerminalSurface(inPane: pane, focus: false))
+        let group = makeGroup(workspace, root: root, member: member)
+        let service = try #require(group.sessionService)
+        defer { service.shutdown() }
+        #expect(group.showTerminal(panel: member, sessionID: "member", provider: "claude"))
+        #expect(!group.showTerminal(panel: member, sessionID: "member", provider: "codex"))
+        #expect(group.rendererLease != nil)
+        service.registry.update(sessionID: "member") { $0.pid = Int(Int32.max) }
+        #expect(group.rendererLease == nil)
+        #expect(!group.showTerminal(panel: member, sessionID: "member", provider: "claude"))
+        #expect(group.showTerminal(panel: root, sessionID: "root-session", provider: "claude"))
+        service.shutdown()
+        #expect(group.rendererLease == nil)
+    }
+
 }

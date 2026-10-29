@@ -419,7 +419,7 @@ extension TerminalController {
         }
         if let surfaceID = record.surfaceID,
            mobileChatBindingResolves(workspaceID: workspaceID, surfaceID: surfaceID),
-           mobileChatBindingIsCurrentAgent(record) {
+           service.sessionBindingMatches(record: record) {
             return ["workspace_id": workspaceID, "surface_id": surfaceID]
         }
         #if DEBUG
@@ -428,7 +428,7 @@ extension TerminalController {
         if let refreshed = await service.refreshSessionBindings(sessionID: sessionID),
            let surfaceID = refreshed.surfaceID,
            mobileChatBindingResolves(workspaceID: workspaceID, surfaceID: surfaceID),
-           mobileChatBindingIsCurrentAgent(refreshed) {
+           service.sessionBindingMatches(record: refreshed) {
             return ["workspace_id": workspaceID, "surface_id": surfaceID]
         }
         #if DEBUG

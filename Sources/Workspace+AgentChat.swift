@@ -17,11 +17,12 @@ extension Workspace {
             for _ in 0..<600 {
                 guard let self, let panel = self.terminalPanel(for: terminalPanelId),
                       panel.agentWorkspace == nil else { return }
-                let ready = TerminalController.shared.agentChatTranscriptService?
-                    .sessionRecords(workspaceID: nil).contains {
+                let service = TerminalController.shared.agentChatTranscriptService
+                let ready = service?.sessionRecords(workspaceID: nil).contains {
                         $0.surfaceID.flatMap(UUID.init(uuidString:)) == terminalPanelId
                             && ($0.agentKind.sourceName == "claude" || $0.agentKind.sourceName == "codex")
-                            && $0.state != .ended
+                            && service?.sessionBindingMatches(surfaceID: terminalPanelId, sessionID: $0.sessionID,
+                                                               provider: $0.agentKind.sourceName) == true
                     } ?? false
                 if ready {
                     self.openTerminalChatView(terminalPanelId: terminalPanelId, presentingWindow: nil)
@@ -57,6 +58,8 @@ extension Workspace {
                           && ($0.agentKind.sourceName == "claude" || $0.agentKind.sourceName == "codex")
                           && $0.state != .ended
                   }),
+                  service.sessionBindingMatches(surfaceID: terminalPanelId, sessionID: record.sessionID,
+                                                provider: record.agentKind.sourceName),
                   let url = Self.agentWorkspaceURL(base: base, terminalPanelId: terminalPanelId, workspaceID: self.id, sessionID: record.sessionID) else {
                 NSSound.beep()
                 return

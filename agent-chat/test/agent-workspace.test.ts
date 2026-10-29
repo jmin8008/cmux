@@ -157,6 +157,19 @@ describe("agent workspace projection", () => {
     expect(wrongWorkspace.snapshot.members).toHaveLength(1);
   });
 
+  test("ended and replaced bindings retain history but never terminal input capability", async () => {
+    const { root, binding } = fixture("codex");
+    const ended = { ...binding, id: "ended-session", terminalID: "other-surface", state: "ended" };
+    const old = { ...binding, id: "old-session-123", terminalID: "reused-surface" };
+    const current = { ...old, id: "new-session-456" };
+    const group = await discoverAgentWorkspace(root, [binding, current, old, ended], () => null);
+    expect(group.snapshot.members.find((m) => m.sessionId === ended.id)?.terminal).toBe(false);
+    expect(group.snapshot.members.find((m) => m.sessionId === old.id)?.terminal).toBe(false);
+    expect(group.snapshot.members.find((m) => m.sessionId === current.id)?.terminal).toBe(true);
+    await expect(discoverAgentWorkspace(root, [{ ...binding, state: "ended" }], () => null)).rejects.toThrow("binding_missing");
+    await expect(discoverAgentWorkspace(root, [{ ...binding, id: "replacement-root" }, binding], () => null)).rejects.toThrow("binding_missing");
+  });
+
   test("selection restoration retains a missing member and rejects unknown versions", () => {
     const selected = { version: 1, memberId: "local:codex:missing", mode: "tools", collapsed: true } as const;
     expect(restoreAgentWorkspaceSelection(selected)).toEqual(selected);

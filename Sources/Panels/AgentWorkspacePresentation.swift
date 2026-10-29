@@ -24,6 +24,8 @@ final class AgentWorkspacePresentation: NSObject, WKScriptMessageHandler, WKNavi
     private weak var workspace: Workspace?
     private let baseURL: URL
     private let defaults: UserDefaults
+    let sessionService: AgentChatTranscriptService?
+    private var sessionObservation: AgentWorkspaceSessionObservation?
     private var selectionKey: String { "agentWorkspace.selection.v1.\(rootProvider).\(rootSessionID)" }
 
     init(
@@ -32,7 +34,8 @@ final class AgentWorkspacePresentation: NSObject, WKScriptMessageHandler, WKNavi
         rootSessionID: String,
         rootProvider: String,
         url: URL,
-        defaults: UserDefaults = .standard
+        defaults: UserDefaults = .standard,
+        sessionService: AgentChatTranscriptService? = nil
     ) {
         self.workspace = workspace
         self.rootPanelID = rootPanelID
@@ -40,6 +43,7 @@ final class AgentWorkspacePresentation: NSObject, WKScriptMessageHandler, WKNavi
         self.rootProvider = rootProvider
         self.baseURL = url.deletingLastPathComponent().deletingLastPathComponent()
         self.defaults = defaults
+        self.sessionService = sessionService ?? TerminalController.shared.agentChatTranscriptService
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .nonPersistent()
         let key = "agentWorkspace.selection.v1.\(rootProvider).\(rootSessionID)"
@@ -54,10 +58,33 @@ final class AgentWorkspacePresentation: NSObject, WKScriptMessageHandler, WKNavi
         }
         self.webView = CmuxWebView(frame: .zero, configuration: configuration, host: CmuxWebViewAppHost())
         super.init()
+        if let service = self.sessionService {
+            sessionObservation = AgentWorkspaceSessionObservation(service: service) { [weak self] in
+                self?.revalidateSessionBindings()
+            }
+        }
         // The content controller retains handlers; the proxy avoids a cycle.
         configuration.userContentController.add(AgentWorkspaceMessageProxy(self), name: "cmuxAgentWorkspace")
         webView.navigationDelegate = self
         webView.load(URLRequest(url: url))
+    }
+
+    func hasCurrentSessionBindings(panelID: UUID, sessionID: String, provider: String) -> Bool {
+        sessionService?.sessionBindingMatches(surfaceID: rootPanelID, sessionID: rootSessionID, provider: rootProvider) == true
+            && sessionService?.sessionBindingMatches(surfaceID: panelID, sessionID: sessionID, provider: provider) == true
+    }
+
+    /// Called synchronously for registry changes, including PID exit and rebind.
+    /// Retain the selected conversation, but withdraw raw input ownership now.
+    func revalidateSessionBindings() {
+        guard let lease = rendererLease, !lease.isCurrent else { return }
+        let restoreWebFocus = terminalOwnsFocus && workspace?.focusedPanelId == rootPanelID
+        releaseRenderer()
+        if restoreWebFocus { focus() }
+        let rootIsCurrent = sessionService?.sessionBindingMatches(
+            surfaceID: rootPanelID, sessionID: rootSessionID, provider: rootProvider
+        ) == true
+        webView.evaluateJavaScript("window.dispatchEvent(new CustomEvent('cmux-agent-workspace-binding-lost', { detail: { rootInvalid: \(!rootIsCurrent) } }));", completionHandler: nil)
     }
 
     func focus() {
@@ -100,7 +127,8 @@ final class AgentWorkspacePresentation: NSObject, WKScriptMessageHandler, WKNavi
     /// Unsupported owners keep the existing focus-at-source fallback.
     @discardableResult
     func showTerminal(panel: TerminalPanel, sessionID: String, provider: String) -> Bool {
-        guard let workspace, workspace.layoutMode != .canvas, workspace.isPortalRenderingEnabled,
+        guard hasCurrentSessionBindings(panelID: panel.id, sessionID: sessionID, provider: provider),
+              let workspace, workspace.layoutMode != .canvas, workspace.isPortalRenderingEnabled,
               let root = workspace.terminalPanel(for: rootPanelID), root.agentWorkspace === self,
               let rootPane = workspace.paneId(forPanelId: root.id),
               let rootTab = workspace.surfaceIdFromPanelId(root.id),
@@ -208,11 +236,7 @@ final class AgentWorkspacePresentation: NSObject, WKScriptMessageHandler, WKNavi
             let surfaceID = (body["surfaceId"] as? String).flatMap(UUID.init(uuidString:)) ?? rootPanelID
             // Check the live registry again at click time. A stale page cannot
             // focus a replacement agent or a surface that moved workspaces.
-            guard let service = TerminalController.shared.agentChatTranscriptService,
-                  service.sessionRecords(workspaceID: nil).contains(where: {
-                      $0.sessionID == sessionID && $0.agentKind.sourceName == provider && $0.state != .ended
-                          && $0.surfaceID.flatMap(UUID.init(uuidString:)) == surfaceID
-                  }),
+            guard hasCurrentSessionBindings(panelID: surfaceID, sessionID: sessionID, provider: provider),
                   let panel = workspace.terminalPanel(for: surfaceID),
                   panel.workspaceId == workspace.id else { NSSound.beep(); return }
             if !showTerminal(panel: panel, sessionID: sessionID, provider: provider) {

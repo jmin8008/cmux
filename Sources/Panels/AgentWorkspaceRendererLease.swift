@@ -34,6 +34,7 @@ final class AgentWorkspaceRendererLease {
               root.workspaceId == workspace.id, panel.workspaceId == workspace.id,
               root.agentWorkspace === presentation,
               presentation.rendererLease === self, panel.agentWorkspaceRendererLease === self,
+              presentation.hasCurrentSessionBindings(panelID: panel.id, sessionID: sessionID, provider: provider),
               case .live = root.agentHibernationPhase,
               case .live = panel.agentHibernationPhase else { return false }
         return root.surface.canAcceptPortalBinding(
