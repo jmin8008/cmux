@@ -4,6 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 // Real sidecar HTTP path, with an isolated registry CLI fixture. No agent runs.
+// The fixture answers in the real `mobile.chat.sessions` wire shape (snake_case, nested state object)
+// captured from the tagged app; an invented camelCase shape hid a 409 in the first native run.
 const directory = await mkdtemp(join(tmpdir(), "cmux-agent-group-http-"));
 const surface = "A1111111-1111-1111-1111-111111111111";
 const workspace = "B2222222-2222-2222-2222-222222222222";
@@ -18,7 +20,7 @@ await writeFile(join(directory, "claude-hook-sessions.json"), JSON.stringify({ s
 await writeFile(cli, `#!${process.execPath}\nimport { appendFileSync } from "node:fs";
 appendFileSync(${JSON.stringify(calls)}, JSON.stringify(process.argv.slice(2)) + "\\n");
 const params = JSON.parse(process.argv[4]);
-console.log(JSON.stringify({ sessions: params.workspace_id === ${JSON.stringify(workspace)} ? [{ id: ${JSON.stringify(sessionId)}, agentKind: "claude", terminalID: ${JSON.stringify(surface)}, state: "working", title: "Main" }] : [] }));\n`);
+console.log(JSON.stringify({ sessions: params.workspace_id === ${JSON.stringify(workspace)} ? [{ session_id: ${JSON.stringify(sessionId)}, agent_kind: "claude", terminal_id: ${JSON.stringify(surface)}, workspace_id: params.workspace_id, kind: "agent", version: 1, state: { state: "working" } }] : [] }));\n`);
 await chmod(cli, 0o700);
 const proc = Bun.spawn([process.execPath, "server.ts"], {
   cwd: join(import.meta.dir, ".."), stdin: "ignore", stdout: "ignore", stderr: "ignore",

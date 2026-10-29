@@ -1,4 +1,4 @@
-import { discoverAgentWorkspace, type WorkspaceSessionBinding } from "./agent-workspace";
+import { discoverAgentWorkspace, normalizeSessionBindings } from "./agent-workspace";
 import { cmuxRpc } from "./cmux-rpc";
 import { initializeAgentPath } from "./path-environment";
 import type {
@@ -2194,7 +2194,7 @@ function startServer() {
         return Response.json({ error: "invalid_binding" }, { status: 400 });
       }
       const result = await cmuxRpc("mobile.chat.sessions", { workspace_id: workspaceId });
-      const payload = result.result as { sessions?: WorkspaceSessionBinding[] } | undefined;
+      const payload = result.result as { sessions?: unknown } | undefined;
       if (!result.ok || !Array.isArray(payload?.sessions)) {
         return Response.json({ error: "registry_unavailable" }, { status: 503 });
       }
@@ -2204,7 +2204,7 @@ function startServer() {
         return Response.json({ error: "binding_missing" }, { status: 409 });
       }
       try {
-        const group = await discoverAgentWorkspace(source, payload.sessions, undefined, { workspaceID: workspaceId });
+        const group = await discoverAgentWorkspace(source, normalizeSessionBindings(payload.sessions), undefined, { workspaceID: workspaceId });
         const memberId = url.searchParams.get("member");
         if (memberId) {
           const detail = await group.detail(memberId);

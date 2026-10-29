@@ -13,6 +13,23 @@ export interface WorkspaceSessionBinding {
   title?: string;
   state?: string;
 }
+/** Maps one `mobile.chat.sessions` row (snake_case, state as `{state: "needs_input"|...}`) to a binding.
+ * Rows that are not agent sessions or lack an id/kind yield nothing, so they can never authorize a group. */
+export function normalizeSessionBindings(rows: unknown): WorkspaceSessionBinding[] {
+  if (!Array.isArray(rows)) return [];
+  return rows.flatMap((row: any) => {
+    const id = row?.session_id ?? row?.id;
+    const agentKind = row?.agent_kind ?? row?.agentKind;
+    if (typeof id !== "string" || typeof agentKind !== "string") return [];
+    const rawState = typeof row.state === "object" && row.state !== null ? row.state.state : row.state;
+    return [{
+      id, agentKind,
+      terminalID: typeof (row.terminal_id ?? row.terminalID) === "string" ? row.terminal_id ?? row.terminalID : undefined,
+      title: typeof row.title === "string" ? row.title : undefined,
+      state: rawState === "needs_input" ? "needsInput" : typeof rawState === "string" ? rawState : undefined,
+    }];
+  });
+}
 interface MemberSource { member: AgentWorkspaceMember; source?: TranscriptSource; events?: AgentEvent[]; childTranscript?: boolean }
 const LIMIT = 4 * 1024 * 1024;
 type TranscriptLog = ReturnType<typeof parseTranscriptText> & { rows: any[]; truncated: boolean };
