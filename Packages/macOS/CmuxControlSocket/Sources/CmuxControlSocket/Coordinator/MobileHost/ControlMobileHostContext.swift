@@ -150,6 +150,16 @@ public protocol ControlMobileHostContext: AnyObject, Sendable {
         params: [String: JSONValue]
     ) async -> ControlCallResult
 
+    /// `mobile.chat.sessions` — lists chat-capable agent sessions bound to one
+    /// workspace; the Agent Workspace sidecar reads this registry over the
+    /// control socket to validate group membership and live terminal bindings.
+    ///
+    /// - Parameter params: The decoded request params (`workspace_id`).
+    /// - Returns: The fully-built command result.
+    nonisolated func controlMobileChatSessions(
+        params: [String: JSONValue]
+    ) async -> ControlCallResult
+
     /// `chat.sessions.dump` (local debug socket) — the full chat-session registry
     /// dump, for diagnosing inconsistent phone-side chat state.
     ///
@@ -171,6 +181,13 @@ public extension ControlMobileHostContext {
 
     /// Default for test and partial contexts without agent chat delivery.
     nonisolated func controlMobileChatSend(
+        params: [String: JSONValue]
+    ) async -> ControlCallResult {
+        .err(code: "method_not_found", message: "Agent chat is unavailable", data: nil)
+    }
+
+    /// Default for test and partial contexts without an agent chat registry.
+    nonisolated func controlMobileChatSessions(
         params: [String: JSONValue]
     ) async -> ControlCallResult {
         .err(code: "method_not_found", message: "Agent chat is unavailable", data: nil)

@@ -81,6 +81,12 @@ private final class FakeMobileHostControlCommandContext: ControlCommandContext {
         await MainActor.run { record("chat.interrupt", params) }
     }
 
+    nonisolated func controlMobileChatSessions(
+        params: [String: JSONValue]
+    ) async -> ControlCallResult {
+        await MainActor.run { record("chat.sessions", params) }
+    }
+
     func controlMobileChatSessionsDump() -> ControlCallResult {
         record("chat.sessions.dump", [:])
     }
@@ -151,6 +157,15 @@ struct ControlCommandCoordinatorMobileHostTests {
         #expect(context.lastMarker == "chat.interrupt")
         #expect(ControlCommandExecutionPolicy(forMethod: "mobile.chat.send") == .socketWorker(mainThreadCallable: false))
         #expect(ControlCommandExecutionPolicy(forMethod: "mobile.chat.interrupt") == .socketWorker(mainThreadCallable: false))
+    }
+
+    @Test func workerSurfaceRoutesChatSessionsListForTheAgentWorkspaceSidecar() async {
+        let (coordinator, context) = makeCoordinator()
+        let params: [String: JSONValue] = ["workspace_id": .string("workspace")]
+        #expect(await coordinator.handleMobileHostAsync(request("mobile.chat.sessions", params), context: context) != nil)
+        #expect(context.lastMarker == "chat.sessions")
+        #expect(context.lastParams == params)
+        #expect(ControlCommandExecutionPolicy(forMethod: "mobile.chat.sessions") == .socketWorker(mainThreadCallable: false))
     }
 
     @Test func v2SurfaceUsesPrivateHostStatusVariant() {
