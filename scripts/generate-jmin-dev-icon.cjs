@@ -15,7 +15,17 @@ async function main() {
     await sharp(source, { density: 288 }).resize(pixels, pixels).png()
       .toFile(path.join(directory, entry.filename));
   }
-  console.log(`Rendered ${catalog.images.length} development icon sizes.`);
+  // The app and Dock plugin use these appearance images while running.
+  const light = (await fs.readFile(source, 'utf8'))
+    .replace(/  <g id="development-banner">[\s\S]*?<\/g>\n/, '');
+  for (const [name, svg] of [
+    ['AppIconLight', light],
+    ['AppIconDark', light.replace('rx="44" fill="#fff"', 'rx="44" fill="#1c1c1e"')]
+  ]) {
+    await sharp(Buffer.from(svg), { density: 288 }).resize(1024, 1024).png()
+      .toFile(path.join(root, 'Assets.xcassets', `${name}.imageset`, `${name}.png`));
+  }
+  console.log(`Rendered ${catalog.images.length} development sizes and two running-app appearance icons.`);
 }
 
 main().catch(error => { console.error(error.message); process.exitCode = 1; });
