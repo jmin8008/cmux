@@ -99,12 +99,20 @@ struct TerminalPanelView: View {
     }
 
     private func nativeTerminal(_ renderedPanel: TerminalPanel, lease: AgentWorkspaceRendererLease? = nil) -> TerminalPanelNativeView {
-        TerminalPanelNativeView(
+        let renderedPanelIsFocused = isFocused && (lease?.presentation?.terminalOwnsFocus ?? true)
+        let ownershipResolver: (@MainActor () -> Bool)?
+        if lease == nil {
+            ownershipResolver = portalPaneOwnershipResolver
+        } else {
+            ownershipResolver = nil
+        }
+
+        return TerminalPanelNativeView(
             panel: renderedPanel,
             paneId: paneId,
-            isFocused: isFocused && (lease?.presentation?.terminalOwnsFocus ?? true),
+            isFocused: renderedPanelIsFocused,
             isVisibleInUI: isVisibleInUI,
-            portalPaneOwnershipResolver: lease == nil ? portalPaneOwnershipResolver : nil,
+            portalPaneOwnershipResolver: ownershipResolver,
             rendererLease: lease,
             portalPriority: portalPriority,
             isSplit: isSplit,
