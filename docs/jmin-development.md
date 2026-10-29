@@ -47,10 +47,11 @@ isolation, not a sandbox for filesystem access, cloud accounts or agent tools.
 
 The development catalog uses a downward `V`, made by rotating the existing
 `web/public/cmux-icon.svg` chevron 90 degrees clockwise. The editable source is
-`design/jmin-dev-icon.svg`; the orange `DEV` banner stays upright. Only the Debug
-catalog changes, so this does not replace the installed stable app's icon.
+`design/jmin-dev-icon.svg`; the orange `DEV` banner stays upright. The running app
+and Dock plugin also use downward light/dark appearance images. These repository
+assets do not replace the installed stable app's icon.
 
-To regenerate its ten catalog sizes with Node.js and `sharp` available:
+To regenerate its ten catalog sizes and two appearance images with Node.js and `sharp` available:
 
 ```sh
 node scripts/generate-jmin-dev-icon.cjs
