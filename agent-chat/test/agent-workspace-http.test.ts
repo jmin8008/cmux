@@ -59,7 +59,12 @@ try {
   assert.equal((await fetch(url.replace(`root=${sessionId}`, "root=changed-session-123"))).status, 409);
   assert.equal((await fetch(url, { headers: { Origin: "https://untrusted.example" } })).status, 403);
   const requests = (await readFile(calls, "utf8")).trim().split("\n").map((line) => JSON.parse(line));
-  assert(requests.every((args: string[]) => args[1] === "mobile.chat.sessions"), "viewing group can only list sessions, never spawn/send/stop");
+  // The sidecar may also start the user's `claude` for capability probes; when that resolves to the
+  // cmux wrapper, the wrapper calls the bundled CLI's `hooks claude inject-settings`. That is not a
+  // registry mutation, so only RPC traffic is held to the list-only contract.
+  const rpcRequests = requests.filter((args: string[]) => args[0] === "rpc");
+  assert(rpcRequests.length > 0, "the group view must query the live session registry");
+  assert(rpcRequests.every((args: string[]) => args[1] === "mobile.chat.sessions"), "viewing group can only list sessions, never spawn/send/stop");
   console.log("agent workspace authenticated HTTP, binding scope, detail and lifecycle assertions passed");
   }
 } finally {
