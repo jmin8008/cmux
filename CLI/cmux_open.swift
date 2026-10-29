@@ -7107,7 +7107,7 @@ extension CMUXCLI {
         [
             Self.legacySettingsDisplayPath,
             Self.fallbackSettingsDisplayPath,
-        ].map(Self.absoluteDiffViewerSettingsPath)
+        ].compactMap { $0 }.map(Self.absoluteDiffViewerSettingsPath)
     }
 
     private func diffViewerShortcutSettings(at path: String) -> [DiffViewerShortcutAction: DiffViewerShortcut]? {
