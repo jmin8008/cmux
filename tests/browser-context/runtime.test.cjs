@@ -21,7 +21,7 @@ function fixture(contentType = 'text/html') {
         handlers.get(name)?.(event);
         return event;
     }
-    return { window, document, element, selected, fire, messages, handlers, frames, created, mutate: () => mutation?.([{ target: body }]) };
+    return { window, document, element, selected, fire, messages, handlers, frames, created, mutate: () => mutation?.([{ type: 'childList', target: body }]) };
 }
 test('click sends one element at mouse-up and suppresses activation', () => {
     const f = fixture();
@@ -78,13 +78,54 @@ test('non-HTML viewers are rejected and disabling mid-drag cancels the gesture',
     assert.equal(f.handlers.size, 0);
 });
 
-test('new embedded frames are shielded and never captured', () => {
+function embeddedElement(value = '', priority = '') {
+    const properties = new Map(value ? [['pointer-events', { value, priority }]] : []);
+    return {
+        closest() { return this; },
+        getBoundingClientRect() { return { left: 500, right: 800, top: 500, bottom: 700, width: 300, height: 200 }; },
+        style: {
+            getPropertyValue: name => properties.get(name)?.value || '',
+            getPropertyPriority: name => properties.get(name)?.priority || '',
+            setProperty(name, value, priority = '') { properties.set(name, { value, priority }); },
+            removeProperty(name) { properties.delete(name); }
+        }
+    };
+}
+
+test('new embedded documents block hit-testing and restore original inline value and priority', () => {
     const f = fixture();
-    f.frames.push({ getBoundingClientRect: () => ({ x: 0, y: 0, width: 300, height: 200 }) });
+    const frames = [embeddedElement(), embeddedElement('auto'), embeddedElement('auto', 'important')];
+    f.frames.push(...frames);
     f.mutate();
-    const shield = f.created.at(-1);
-    assert.equal(shield.style.width, '300px');
-    assert.equal(f.fire('mousedown', { target: shield }).prevented, true);
-    f.fire('mouseup', { target: shield });
+    for (const frame of frames) {
+        assert.equal(frame.style.getPropertyValue('pointer-events'), 'none');
+        assert.equal(frame.style.getPropertyPriority('pointer-events'), 'important');
+        assert.equal(f.fire('mousedown', { target: frame }).prevented, true);
+        f.fire('mouseup', { target: frame });
+    }
+    assert.equal(f.messages.length, 0);
+    f.window.__cmuxContextPicker.stop();
+    assert.deepEqual(frames.map(frame => frame.style.getPropertyValue('pointer-events')), ['', 'auto', 'auto']);
+    assert.deepEqual(frames.map(frame => frame.style.getPropertyPriority('pointer-events')), ['', '', 'important']);
+});
+
+test('removed embeds are restored and page inline rewrites are blocked until stop', () => {
+    const f = fixture();
+    const frame = embeddedElement('auto', 'important');
+    f.frames.push(frame); f.mutate();
+    frame.style.setProperty('pointer-events', 'auto'); f.mutate();
+    assert.equal(frame.style.getPropertyValue('pointer-events'), 'none');
+    f.frames.pop(); f.mutate();
+    assert.equal(frame.style.getPropertyValue('pointer-events'), 'auto');
+    assert.equal(frame.style.getPropertyPriority('pointer-events'), 'important');
+});
+
+test('clicks through a disabled embedded document never capture the element behind it', () => {
+    const f = fixture();
+    const frame = embeddedElement();
+    f.frames.push(frame); f.mutate();
+    const down = f.fire('mousedown', { clientX: 550, clientY: 550 });
+    assert.equal(down.prevented, true);
+    f.fire('mouseup', { clientX: 550, clientY: 550 });
     assert.equal(f.messages.length, 0);
 });

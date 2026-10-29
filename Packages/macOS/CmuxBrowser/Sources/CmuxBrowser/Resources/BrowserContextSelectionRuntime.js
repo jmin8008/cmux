@@ -5,7 +5,7 @@
     let gesture = null;
     let style = null;
     let outline = null;
-    let shields = [];
+    const blockedEmbeds = new Map();
     let frameObserver = null;
     const listeners = [];
     const maximumCharacters = 32768;
@@ -14,7 +14,14 @@
         event.preventDefault();
         event.stopImmediatePropagation();
     };
-    const excluded = element => !element || shields.some(shield => shield.overlay === element) || element.closest("input, textarea, select, [contenteditable]:not([contenteditable='false']), script, style, iframe, object, embed");
+    const excluded = element => !element || element.closest("input, textarea, select, [contenteditable]:not([contenteditable='false']), script, style, iframe, object, embed");
+    const overEmbeddedDocument = event => {
+        for (const element of blockedEmbeds.keys()) {
+            const bounds = element.getBoundingClientRect();
+            if (bounds.width > 0 && bounds.height > 0 && event.clientX >= bounds.left && event.clientX <= bounds.right && event.clientY >= bounds.top && event.clientY <= bounds.bottom) return true;
+        }
+        return false;
+    };
     const selector = element => {
         if (element.id) return "#" + CSS.escape(element.id);
         const testID = element.getAttribute("data-testid");
@@ -38,8 +45,11 @@
         frameObserver = null;
         style?.remove();
         outline?.remove();
-        for (const shield of shields) shield.overlay.remove();
-        shields = [];
+        for (const [element, original] of blockedEmbeds) {
+            if (original.value) element.style.setProperty("pointer-events", original.value, original.priority);
+            else element.style.removeProperty("pointer-events");
+        }
+        blockedEmbeds.clear();
         style = outline = null;
         gesture = null;
         revision = null;
@@ -55,39 +65,43 @@
         outline.setAttribute("aria-hidden", "true");
         outline.style.cssText = "position:fixed;pointer-events:none;z-index:2147483647;border:2px solid #3578ee;background:rgba(53,120,238,.08);box-sizing:border-box;display:none";
         document.documentElement.appendChild(outline);
-        // Pointer events inside child frames do not bubble to this document.
-        // Cover unsupported embedded documents so selection never activates them.
-        const positionShields = () => {
-            const frames = Array.from(document.querySelectorAll("iframe, object, embed"));
-            for (const shield of shields) if (!frames.includes(shield.frame)) shield.overlay.remove();
-            shields = shields.filter(shield => frames.includes(shield.frame));
-            for (const frame of frames) {
-                if (shields.some(shield => shield.frame === frame)) continue;
-                const overlay = document.createElement("div");
-                overlay.setAttribute("aria-hidden", "true");
-                overlay.style.cssText = "position:fixed;z-index:2147483646;cursor:not-allowed;background:transparent";
-                document.documentElement.appendChild(overlay);
-                shields.push({ frame, overlay });
+        // Child-frame events do not bubble here. Disable hit-testing on the
+        // embedded element itself: geometry overlays cannot cover animation,
+        // layout shifts, or content promoted into a modal dialog's top layer.
+        const blockEmbeddedDocuments = () => {
+            const embeds = new Set(document.querySelectorAll("iframe, object, embed"));
+            for (const [element, original] of blockedEmbeds) {
+                if (embeds.has(element)) continue;
+                if (original.value) element.style.setProperty("pointer-events", original.value, original.priority);
+                else element.style.removeProperty("pointer-events");
+                blockedEmbeds.delete(element);
             }
-            for (const { frame, overlay } of shields) {
-                const bounds = frame.getBoundingClientRect();
-                Object.assign(overlay.style, { left: bounds.x + "px", top: bounds.y + "px", width: bounds.width + "px", height: bounds.height + "px" });
+            for (const element of embeds) {
+                if (!blockedEmbeds.has(element)) {
+                    blockedEmbeds.set(element, {
+                        value: element.style.getPropertyValue("pointer-events"),
+                        priority: element.style.getPropertyPriority("pointer-events")
+                    });
+                }
+                // Avoid self-triggering observer cycles, but reassert the guard
+                // if the page rewrites inline styles while selection is armed.
+                if (element.style.getPropertyValue("pointer-events") !== "none" || element.style.getPropertyPriority("pointer-events") !== "important") {
+                    element.style.setProperty("pointer-events", "none", "important");
+                }
             }
         };
-        positionShields();
+        blockEmbeddedDocuments();
         frameObserver = new MutationObserver(records => {
-            if (records.some(record => record.target !== style && record.target !== outline && !shields.some(shield => shield.overlay === record.target))) positionShields();
+            if (records.some(record => record.type === "childList" || blockedEmbeds.has(record.target))) blockEmbeddedDocuments();
         });
-        frameObserver.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["style", "class", "hidden"] });
-        add("scroll", positionShields);
-        add("resize", positionShields);
+        frameObserver.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["style"] });
         add("pointerdown", event => {
             event.stopImmediatePropagation();
-            if (excluded(event.target)) event.preventDefault();
+            if (excluded(event.target) || overEmbeddedDocument(event)) event.preventDefault();
         });
         add("mousedown", event => {
             event.stopImmediatePropagation();
-            if (event.button !== 0 || !event.isTrusted || excluded(event.target)) {
+            if (event.button !== 0 || !event.isTrusted || excluded(event.target) || overEmbeddedDocument(event)) {
                 event.preventDefault();
                 gesture = null;
                 return;
@@ -99,7 +113,7 @@
             event.stopImmediatePropagation();
             if (gesture && Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) > 4) gesture.moved = true;
             const element = event.target;
-            if (excluded(element) || element === document.body || element === document.documentElement) {
+            if (excluded(element) || overEmbeddedDocument(event) || element === document.body || element === document.documentElement) {
                 outline.style.display = "none";
                 return;
             }

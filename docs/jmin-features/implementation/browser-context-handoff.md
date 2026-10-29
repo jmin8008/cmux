@@ -10,7 +10,7 @@
 
 The browser toolbar now has a context selection toggle. It automatically chooses the single detected agent or the uniquely most recently used agent terminal in the same workspace. Input recency comes from accepted terminal input; changing focus to a dev server does not select it. Multiple unused agents require a destination selection. The active destination title stays visible and can be changed.
 
-The isolated WebKit picker captures a clicked element or a text drag at mouse-up, once per gesture. Empty drags do not send. Image clicks include alt text only. Input/editable fields, child frames, embedded viewers, PDF and other non-HTML documents are excluded. Embedded documents, including dynamically inserted frames, are shielded from pointer input while armed. Escape and toggle-off remove listeners, styles, and shields. Design Mode, React Grab and context selection are mutually exclusive.
+The isolated WebKit picker captures a clicked element or a text drag at mouse-up, once per gesture. Empty drags do not send. Image clicks include alt text only. Input/editable fields, child frames, embedded viewers, PDF and other non-HTML documents are excluded. Embedded documents, including dynamically inserted frames, have their own inline pointer hit-testing disabled while armed. Original inline value and priority are restored on removal or stop; no screen-position overlay is used for input blocking. Escape and toggle-off remove listeners and styles and restore embedded hit-testing. Design Mode, React Grab and context selection are mutually exclusive.
 
 A bracketed text block contains a localized heading followed by JSON-quoted data: sanitized URL or HTML file URL, text, element tag, CSS selector, viewport CSS pixel bounds, viewport dimensions, and scroll offsets. JSON field names are stable interchange identifiers. Credentials, query, fragment, terminal controls and bidi controls are removed. There is no screenshot, attachment, image artifact, or inferred source-code location. Oversized selections are rejected with an explicit 32 KB error rather than truncated.
 
@@ -40,7 +40,8 @@ The app pins an actual terminal surface ID and document revision before arming. 
 
 Passed:
 
-- `node --test tests/browser-context/runtime.test.cjs`: 6 actual runtime-listener behavior tests (click, text/empty drag, input/size rejection, image metadata/Escape, unsupported viewer/cancel, dynamic frame shielding).
+- `node --test tests/browser-context/runtime.test.cjs`: 8 actual runtime-listener behavior tests (click, text/empty drag, input/size rejection, image metadata/Escape, unsupported viewer/cancel, dynamic embed blocking/restoration, page style rewrites, and ignored click-through selection).
+- `node --test tests/browser-context/frame-hit-test.test.cjs`: a real headless Chromium test with 16 checks for CSS-animation geometry changes, modal top-layer frames, dynamic iframe/object/embed insertion, style rewrites, and restored pointer input. This test fails against the pre-fix runtime and passes against the revised runtime. It skips explicitly when no Chromium binary is installed.
 - `BrowserContextSelectionTests`: 5 Swift Testing tests for JSON quoting/control removal/URL sanitation, size/type rejection, local HTML text, agent ranking, stale/closed/duplicate delivery gates. The exact source and test files were symlinked into a temporary minimal SwiftPM harness to avoid unrelated SwiftUI dependencies.
 - A focused `swiftc -typecheck -swift-version 6` check of the controller, WebKit message handler and toolbar against the exact new model module, with small stubs only for the existing app clipboard/style/help seams. This found and fixed WebKit's callback-only content-world evaluation overload. This is not a full app compile.
 - `python3 scripts/verify-local.py --affected <base> --swift-changed <base>`: 17/17 checks.
@@ -65,3 +66,7 @@ Blocked / not claimed:
 6. Toggle Design Mode and React Grab in both directions, and close/move the browser panel. Confirm no selection interception remains after teardown.
 
 Current boundaries: only registered local agent terminals and hook-backed relay agents are auto-detected; unregistered shells and non-HTML viewers require future support. Browser portal/real input behavior remains a native smoke-test item.
+
+## Review correction: embedded hit-testing
+
+The initial fixed overlays could miss a moving frame and could not cover an iframe in a modal top layer. The follow-up removes those overlays and sets `pointer-events: none !important` on each embedded element itself. A mutation observer blocks new embeds and reasserts the property after page inline-style changes; teardown restores the original value and priority. Capture guards ignore the visible bounds of disabled embeds so clicks do not accidentally select underlying page content. A real Chromium hit-test fixture reproduces both reported defects against the prior commit. Native WebKit smoke validation remains pending with the app build.
