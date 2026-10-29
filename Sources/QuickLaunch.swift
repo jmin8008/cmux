@@ -107,6 +107,10 @@ final class QuickLaunchModel: ObservableObject {
             }
             error = nil
         } catch {
+            #if DEBUG
+            let nsError = error as NSError
+            NSLog("quickLaunch.open failed kind=%@ domain=%@ code=%ld", String(describing: entry.target.kind), nsError.domain, nsError.code)
+            #endif
             self.error = entry.target.kind == .app
                 ? String(localized: "quickLaunch.error.app", defaultValue: "This app could not be opened. Edit the shortcut and select the installed app again.")
                 : String(localized: "quickLaunch.error.open", defaultValue: "This shortcut could not be opened in this workspace. Check the address and browser availability.")
@@ -127,12 +131,25 @@ final class QuickLaunchModel: ObservableObject {
         if let running = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first(where: {
             $0.bundleURL?.standardizedFileURL == url.standardizedFileURL
         }) {
-            guard running.activate() else { throw QuickLaunchError.invalidEntry }
-            return
+            if running.activate() { return }
+            // A running app can refuse activation (for example while hidden or
+            // not yet frontable). Fall through to the same verified URL.
+            #if DEBUG
+            NSLog("quickLaunch.openApp activate() returned false bundle=%@", bundleID)
+            #endif
         }
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.activates = true
-        _ = try await NSWorkspace.shared.openApplication(at: url, configuration: configuration)
+        configuration.createsNewApplicationInstance = false
+        do {
+            _ = try await NSWorkspace.shared.openApplication(at: url, configuration: configuration)
+        } catch {
+            #if DEBUG
+            let nsError = error as NSError
+            NSLog("quickLaunch.openApp openApplication failed domain=%@ code=%ld bundle=%@", nsError.domain, nsError.code, bundleID)
+            #endif
+            throw error
+        }
     }
 }
 
