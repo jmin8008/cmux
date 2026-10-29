@@ -4,7 +4,7 @@
 - Baseline: `169da41b5d27ae811bb5dfa41a99980be97b9949`
 - Worktree: `/Users/jgy/workplace/tmp/cmux-worktrees/drag-out-window`
 - Design: [SDD](../architecture/prd2-drag-out-window-sdd.md), [ADR 0002](../decisions/0002-live-panel-window-transfer.md)
-- Status: implementation committed locally; native build and GUI acceptance remain pending Xcode installation.
+- Status: native application build passed; the first live drag check exposed a startup callback wiring defect, now repaired with a focused regression. Native acceptance must be repeated on the repaired build.
 
 ## Behavior
 
@@ -74,3 +74,27 @@ Compile/run the four new app tests through `scripts/test-unit.sh` with a separat
 7. First native check must confirm that AppKit supplies fresh mouse-up evidence on this macOS version. The implementation deliberately declines a tear-off when the native loop exposes neither a local mouse-up nor a current mouse-up event.
 
 No native app build, launch or visual verification is claimed by this handoff. No feature merge, push or external PR was performed.
+
+## 2026-10-29 native verification and startup repair
+
+The `b844fe58d9` tagged application compiled and launched with its isolated socket.
+A terminal in `PRD2 native QA` reported shell PID `21939`, TTY `ttys015`, and a
+session marker before dragging. Two native outside drops started a Bonsplit drag
+but did not create a new window. Escape cleared the drag state and retained the
+same panel `4B5731C3-7F2C-4561-BC50-471301072386` and terminal contents.
+
+The initial `TabManager` creates its registry before `AppDelegate.configure`
+adopts it. The original drag-out callback was installed only by the delegate's
+registry-creation getter, so adoption skipped the callback. Creation and adoption
+now use the same weak-owner callback installer.
+
+`DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer python3 tests/test_drag_out_bootstrap_registry.py`
+executes the actual production registry/adoption bodies with only UI effects
+substituted. At red commit `833e0a9e1d`, the bootstrap completion reached zero
+handlers and moved no panel while the created-registry case passed. With the fix,
+both cases pass and releasing the delegate succeeds (no callback retain cycle).
+This validates startup wiring; it does not establish native mouse-release evidence.
+
+Rebuilt native drag, browser/preview continuity, cross-window acceptance, and
+whole-workspace layout checks remain pending. Logs and tree snapshots are under
+`/tmp/cmux-prd2-native-qa/`.
