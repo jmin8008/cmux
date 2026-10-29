@@ -38,8 +38,11 @@ struct AgentWorkspaceRendererLeaseTests {
     }
 
     @Test func switchingMembersPreservesSessionsAndRevokesOldHostEligibility() throws {
-        let workspace = Workspace()
-        defer { workspace.teardownAllPanels() }
+        // Portal visibility is authorized only for a selected workspace owned by a registered
+        // tab manager; a bare Workspace() is clamped hidden inside the app host.
+        let fixture = TerminalPortalTestWorkspace()
+        defer { fixture.tearDown() }
+        let workspace = fixture.workspace
         let root = try #require(workspace.focusedTerminalPanel)
         let pane = try #require(workspace.paneId(forPanelId: root.id))
         let member = try #require(workspace.newTerminalSurface(inPane: pane, focus: false))
