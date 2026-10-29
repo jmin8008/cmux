@@ -1377,10 +1377,19 @@ if [[ "$BUILD_ONLY" -eq 1 && "$NAME_SET" -eq 1 && "$APP_NAME" == "$PRODUCT_APP_N
   exit 1
 fi
 
-# A tagged launch is a dogfood surface, so it must have an explicit identity
-# before the app is started.  Keeping this gate here covers agents that call
-# reload.sh directly instead of the higher-level dev-setup wrapper.
-if [[ "$LAUNCH" -eq 1 && -n "$TAG" && -z "$AUTH_PROFILE" ]]; then
+# A local-backend fork may launch without selecting an upstream dogfood account.
+# Explicit identity requests and backend/API overrides keep the existing gate;
+# this exception changes only launch preflight, never server authentication.
+SKIP_IMPLICIT_DEV_AUTH=0
+if [[ "${CMUX_DEV_BACKEND_MODE:-remote}" == "local" && "$PROD_AUTH" -eq 0 \
+      && -z "$AUTH_PROFILE" && -z "$AUTH_CREDENTIALS_FILE" && -z "$AUTH_EXPECTED_ACCOUNT" \
+      && -z "${CMUX_DEV_BACKEND_URL:-}" && -z "${CMUX_DEV_API_BASE_URL:-}" ]]; then
+  SKIP_IMPLICIT_DEV_AUTH=1
+fi
+
+# Remote/production tagged launches must still have an explicit identity before
+# the app starts, including callers that do not use the dev-setup wrapper.
+if [[ "$LAUNCH" -eq 1 && -n "$TAG" && -z "$AUTH_PROFILE" && "$SKIP_IMPLICIT_DEV_AUTH" -eq 0 ]]; then
   AUTH_PROFILE="personal"
   if [[ -z "$AUTH_CREDENTIALS_FILE" ]]; then
     for candidate in "${HOME:-}/.secrets/cmuxterm-dev.env" "${HOME:-}/.secrets/cmux.env"; do
@@ -1414,7 +1423,7 @@ if [[ -n "$AUTH_PROFILE" || -n "$AUTH_EXPECTED_ACCOUNT" ]]; then
   # normalized account; build tools and package plugins must never inherit the
   # credential while Xcode is running.
   AUTH_EXPECTED_ACCOUNT="$(
-    cmux_dev_secrets_load "${auth_loader_args[@]}" >/dev/null
+    cmux_dev_secrets_load "${auth_loader_args[@]}" >/dev/null || exit $?
     printf '%s' "$CMUX_DEV_AUTH_ACCOUNT"
   )" || exit $?
 fi
@@ -2261,6 +2270,7 @@ if [[ "$LAUNCH" -eq 1 ]]; then
     -u CMUX_STACK_PUBLISHABLE_CLIENT_KEY
     -u CMUX_AUTH_CREDENTIALS_FILE
     -u CMUX_DEV_AUTH_PROFILE
+    -u CMUX_DEV_AUTH_ACCOUNT
     -u CMUX_DEV_AUTH_REPLACE_SESSION
     -u CMUX_DOGFOOD_STACK_EMAIL
     -u CMUX_DOGFOOD_STACK_PASSWORD

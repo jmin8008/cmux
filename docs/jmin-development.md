@@ -13,7 +13,14 @@ After the prerequisites and setup in [CONTRIBUTING.md](../CONTRIBUTING.md):
 For a build without launching, omit `--launch`. To validate compilation without
 replacing the running development build, use `./scripts/dev-jmin.sh --build-only`.
 The wrapper uses the local development backend; cloud features need their own
-backend setup. Use the tagged CLI wrapper for development app commands.
+backend setup. A launch with this unoverridden local backend does not require an
+upstream personal credential file. Explicit `--auth-profile`, `--credentials-file`
+or `--expected-account` options still validate their requested identity. Remote
+backend/API overrides and `--prod-auth` keep the authenticated launch requirement.
+This changes only the local build script's startup prerequisite; production and
+cloud server authentication remain unchanged. Tagged launch environments discard
+inherited account, profile and credential variables.
+Use the tagged CLI wrapper for development app commands.
 
 ## Settings isolation
 
@@ -40,6 +47,7 @@ isolation, not a sandbox for filesystem access, cloud accounts or agent tools.
 
 ```sh
 python3 tests/test_dev_config_isolation.py
+python3 tests/test_reload_local_backend_auth.py
 swift test --package-path Packages/macOS/CMUXAgentLaunch --filter AgentExternalLauncherTests
 swift test --package-path Packages/macOS/CmuxSettings --filter CmuxConfigLocationTests
 python3 scripts/verify-local.py --swift-changed
