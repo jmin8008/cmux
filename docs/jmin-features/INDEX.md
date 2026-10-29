@@ -81,3 +81,7 @@
 - 문서에 표시한 UI 문구는 제안이며 제품 문자열을 추가하지 않았다. 실제 구현에서 native/web localization audit을 수행한다. 진행 중인 다른 코드 변경을 포함하는 광범위한 자동 localization 작업은 이 문서 작업에서 실행하지 않았다.
 - PRD1: 대상 표시/변경과 모호한 후보 처리, 텍스트 상한·gesture 판정. PRD2: provider별 transfer 지원과 특수 drop 대상. PRD3: 상세의 아래/옆 배치, Brain과의 정확한 대응, provider capability·native group host. PRD4: 등록 폼·기본 열 위치·재사용 후보 선택의 세부사항. 상세는 각 SDD의 남은 설계·검증 항목에 있다.
 <!-- index:manual:end -->
+
+## 병렬 구현 상태
+
+[브랜치·개발 환경·검증 대기 항목](implementation/STATUS.md)에 현재 로컬 구현 상태와 Xcode 설치 제약을 기록한다.
