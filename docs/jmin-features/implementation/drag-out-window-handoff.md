@@ -98,3 +98,25 @@ This validates startup wiring; it does not establish native mouse-release eviden
 Rebuilt native drag, browser/preview continuity, cross-window acceptance, and
 whole-workspace layout checks remain pending. Logs and tree snapshots are under
 `/tmp/cmux-prd2-native-qa/`.
+
+## 2026-10-29 rebuilt-app verification (observed vs not run)
+
+Build: tagged app `jmin-window` rebuilt from `0f95dbc047` (`dev-jmin-window.sh --launch`, BUILD SUCCEEDED, `ping` = PONG, app PID 77649). Earlier rebuild at `f17b77478c` was replaced by this one.
+
+### Defects found and fixed this session
+1. `cmuxTests/DragOutWindowTransferTests.swift` did not compile: `Tab` ambiguous in the rejecting delegate. Fixed by `Bonsplit.Tab` (`39849d43a4`).
+2. **Real production defect** found by the app-host tests (2 of 4 red, `target.panels.count == 2`: `ChiefPanel` + moved panel): a new window starts as `[Chief home, bootstrap Terminal]`, but `moveSurfaceToNewWindow` used `tabs.first` (the Chief home) as the target, so the dragged panel landed beside the Chief panel and the bootstrap terminal stayed. Fixed to use the first non-Chief-home workspace (`0f95dbc047`). Same command red -> green.
+
+### App-host tests (runner `--profile window`; plan, clone, settings, build, run)
+- `settings` verified; the cloned cache needed its stale `ModuleCache.noindex` moved aside (absolute module-cache path mismatch from the APFS clone).
+- Red (`63754b4700`): 4 executed, 2 passed, 2 failed (xcresult summary). Green (`0f95dbc047`): **4 executed, 4 passed, 0 failed** (`failedAttachRestoresSamePanelInOriginalSplit`, `newWindowKeepsTheTerminalSurfaceAndRemovesBootstrap`, `newWindowKeepsBrowserWebViewObject`, `entireWorkspaceKeepsSplitAndPanelIdentity`) plus the isolation test. `verify-local.py`: 17/17.
+
+### Real drag, observed on `0f95dbc047` (cmux-cua foreground drag)
+- Terminal tab dragged outside every window: one new window created at (100, 267) near the drop point; surface `surface:1000030006` unchanged id; shell PID 79020 / `ttys013` before and after, marker output continued (tick 1-7 before, 41+ after, no restart). Mouse-up was classified as a release (a window was created).
+- Cross-window accept: browser tab dropped on another cmux window moved into it (source workspace removed under the empty-source policy); no extra window.
+- Browser outbound drag to empty desktop: new window created; JS state (`window.__prd2`) and URL preserved, i.e. same WKWebView; `scrollY` went 200 -> 0 (not investigated).
+
+### Not verified
+- Whole-workspace/sidebar drag-out: two synthetic drags from a sidebar row produced no window and the log never showed `hasSidebarDrag=1`; the sidebar drag session apparently did not start from synthetic events. This is neither a pass nor a confirmed defect. The unit test for layout preservation passes.
+- Escape cancel on this build: cua `drag` is atomic, no key can be sent mid-drag. Escape preservation was only observed on the pre-fix `b844fe58d9` build.
+- File/Markdown preview drag; negative-origin display, fullscreen source; duplicate end callback; multi-panel sole-vs-multi source beyond the terminal+browser case.
