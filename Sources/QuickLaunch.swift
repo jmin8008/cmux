@@ -67,9 +67,20 @@ final class QuickLaunchModel: ObservableObject {
                         throw QuickLaunchError.invalidEntry
                     }
                     let profile = workspace.quickLaunchProfileID()
-                    let candidates = workspace.panels.values.compactMap { $0 as? BrowserPanel }.map {
-                        QuickLaunchBrowserCandidate(panelID: $0.id, workspaceID: workspace.id,
-                            profileID: $0.profileID, url: $0.currentURL?.absoluteString)
+                    let candidates = workspace.panels.values.compactMap { panel -> QuickLaunchBrowserCandidate? in
+                        if let browser = panel as? BrowserPanel {
+                            return QuickLaunchBrowserCandidate(panelID: browser.id, workspaceID: workspace.id,
+                                profileID: browser.profileID, url: browser.currentURL?.absoluteString)
+                        }
+                        // Unselected restored tabs keep their identity and metadata before
+                        // WebKit is materialized. Include them without loading every page.
+                        if let deferred = panel as? DeferredBrowserPanel,
+                           let snapshot = deferred.sessionPanelSnapshot.browser {
+                            return QuickLaunchBrowserCandidate(panelID: deferred.id, workspaceID: workspace.id,
+                                profileID: BrowserPanel.resolvedProfileID(requested: snapshot.profileID),
+                                url: snapshot.urlString)
+                        }
+                        return nil
                     }
                     let match = QuickLaunchBrowserReuse.panelID(for: url.absoluteString, workspaceID: workspace.id,
                         profileID: profile, boundPanelID: bindings[workspace.id]?[entry.id],
@@ -89,6 +100,9 @@ final class QuickLaunchModel: ObservableObject {
                     } else {
                         throw QuickLaunchError.invalidEntry
                     }
+                    // UI actions bypass socket command completion, which normally
+                    // invalidates cached surface lists and focus snapshots.
+                    TerminalController.shared.externalTopologyDidChange()
                 }
             }
             error = nil
