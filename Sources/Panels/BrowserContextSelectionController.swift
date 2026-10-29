@@ -19,6 +19,7 @@ final class BrowserContextSelectionController {
     @ObservationIgnored private weak var webView: WKWebView?
     @ObservationIgnored private var handler: BrowserContextSelectionMessageHandler?
     @ObservationIgnored private var gate = BrowserContextDeliveryGate()
+    @ObservationIgnored private var selection = BrowserContextTargetSelection()
     @ObservationIgnored private var operation = UUID()
     @ObservationIgnored private var pageURL: URL?
     @ObservationIgnored private var task: Task<Void, Never>?
@@ -54,8 +55,9 @@ final class BrowserContextSelectionController {
     func toggle() {
         if isActive || isTransitioning { stop(); return }
         refreshTargets()
-        if let target, !candidates.contains(where: { $0.id == target.id }) { self.target = nil }
-        target = target ?? BrowserContextTargetResolver().resolve(candidates)
+        // Automatic targets are re-resolved from current input recency on every
+        // activation; only an explicit user choice is remembered.
+        target = selection.resolve(candidates)
         guard target != nil else {
             message = String(localized: "browser.context.chooseTarget", defaultValue: "Choose an agent terminal for selected context.")
             isTargetPickerPresented = true
@@ -66,6 +68,7 @@ final class BrowserContextSelectionController {
 
     func selectTarget(_ target: BrowserContextTarget) {
         stop()
+        selection.choose(target.id)
         self.target = target
         isTargetPickerPresented = false
         start()
@@ -99,6 +102,14 @@ final class BrowserContextSelectionController {
                 )
                 guard self.operation == revision, !Task.isCancelled, webView.url == url else { return }
                 guard activated else { throw CocoaError(.featureUnsupported) }
+                // The pinned terminal may have closed or moved while the runtime was installing.
+                self.refreshTargets()
+                guard self.candidates.contains(where: { $0.id == target.id }) else {
+                    self.stop()
+                    self.message = String(localized: "browser.context.targetGone", defaultValue: "The agent terminal is no longer available in this workspace. Choose a target or copy the context.")
+                    self.isTargetPickerPresented = true
+                    return
+                }
                 self.pageURL = url
                 self.gate.arm(targetID: target.id, revision: revision)
                 self.isActive = true

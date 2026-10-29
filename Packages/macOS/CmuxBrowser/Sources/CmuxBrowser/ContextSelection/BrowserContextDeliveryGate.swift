@@ -34,8 +34,14 @@ public struct BrowserContextDeliveryGate: Sendable {
     ///   - availableTargetIDs: Live agent terminals in the original workspace.
     /// - Returns: The pinned target if the capture is current and not already attempted.
     public mutating func claim(_ capture: BrowserContextCapture, availableTargetIDs: Set<UUID>) -> UUID? {
-        guard capture.revision == revision, let targetID, availableTargetIDs.contains(targetID),
-              consumed.insert(capture.id).inserted else { return nil }
+        guard capture.revision == revision, let targetID else { return nil }
+        // A target that closed or moved while a capture was in flight disarms the
+        // revision. It must not receive later captures if it reappears.
+        guard availableTargetIDs.contains(targetID) else {
+            invalidate()
+            return nil
+        }
+        guard consumed.insert(capture.id).inserted else { return nil }
         return targetID
     }
 }
