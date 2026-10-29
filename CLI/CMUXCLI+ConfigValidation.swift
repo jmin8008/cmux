@@ -238,6 +238,7 @@ extension CMUXCLI {
             ("legacy app support", Self.fallbackSettingsDisplayPath),
         ]
         for (label, displayPath) in optionalPaths {
+            guard let displayPath else { continue }
             let path = Self.absoluteConfigPath(displayPath)
             guard path != primary,
                   FileManager.default.fileExists(atPath: path),
@@ -519,7 +520,7 @@ extension CMUXCLI {
             Self.primarySettingsDisplayPath,
             Self.legacySettingsDisplayPath,
             Self.fallbackSettingsDisplayPath,
-        ].map(Self.absoluteConfigPath)
+        ].compactMap { $0 }.map(Self.absoluteConfigPath)
         if globalPaths.contains(normalized) {
             return .global
         }
