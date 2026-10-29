@@ -34,6 +34,8 @@ extension BrowserPanel {
         if enabled, !(await deactivateReactGrabForDesignMode(reason: reason)) {
             return false
         }
+        // Context selection may have been armed while React Grab was closing.
+        if enabled { contextSelectionController.stop() }
         return await designModeController.setEnabled(enabled, reason: reason)
     }
 
@@ -45,6 +47,8 @@ extension BrowserPanel {
             false,
             reason: "\(reason).deactivateDesignMode"
         )
+        // Context selection may have been armed while Design Mode was closing.
+        contextSelectionController.stop()
         if !disabled {
             designModeController.presentError(
                 String(
