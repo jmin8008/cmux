@@ -4,49 +4,6 @@ import CmuxTerminal
 
 @MainActor
 final class MainWindowFocusController {
-    private enum EffectiveFocusOwner {
-        case mainPanel
-        case rightSidebar
-        case unknown
-    }
-
-    private enum RightSidebarFocusTarget: Equatable {
-        case host
-        case outline
-        case searchField
-        case firstItem
-    }
-
-    private struct RightSidebarFocusRequest: Equatable {
-        let id: UInt64
-        let mode: RightSidebarMode
-        let target: RightSidebarFocusTarget
-    }
-
-    private enum RightSidebarFocusState: Equatable {
-        case inactive
-        case requested(RightSidebarFocusRequest)
-        case focused(mode: RightSidebarMode, target: RightSidebarFocusTarget)
-
-        var mode: RightSidebarMode? {
-            switch self {
-            case .inactive:
-                return nil
-            case .requested(let request):
-                return request.mode
-            case .focused(let mode, _):
-                return mode
-            }
-        }
-
-        var request: RightSidebarFocusRequest? {
-            if case .requested(let request) = self {
-                return request
-            }
-            return nil
-        }
-    }
-
     let windowId: UUID
 
     private weak var window: NSWindow?
@@ -163,7 +120,9 @@ final class MainWindowFocusController {
     }
 
     func noteTerminalInteraction(workspaceId: UUID, panelId: UUID) {
-        noteMainPanelInteraction(workspaceId: workspaceId, panelId: panelId)
+        let containerID = tabManager?.tabs.first(where: { $0.id == workspaceId })?
+            .agentWorkspaceFocusContainer(forSurfaceID: panelId) ?? panelId
+        noteMainPanelInteraction(workspaceId: workspaceId, panelId: containerID)
     }
 
     func noteMainPanelInteraction(workspaceId: UUID, panelId: UUID) {
@@ -610,10 +569,15 @@ final class MainWindowFocusController {
             return false
         }
         guard let terminalPanel = workspace.focusedTerminalInputTarget()?.panel else { return false }
+        if let group = workspace.focusedTerminalPanel?.agentWorkspace, group.routesFindToWebContent {
+            group.focus()
+            return true
+        }
+        let containerID = workspace.agentWorkspaceFocusContainer(forSurfaceID: terminalPanel.id)
         rightSidebarFocusState = .inactive
-        intent = .mainPanel(workspaceId: workspace.id, panelId: terminalPanel.id)
+        intent = .mainPanel(workspaceId: workspace.id, panelId: containerID)
         publishFeedFocusSnapshot()
-        workspace.focusPanel(terminalPanel.id)
+        workspace.focusPanel(containerID)
         terminalPanel.hostedView.ensureFocus(
             for: workspace.id,
             surfaceId: terminalPanel.id,

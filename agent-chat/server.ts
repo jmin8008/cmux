@@ -1,3 +1,5 @@
+import { discoverAgentWorkspace, type WorkspaceSessionBinding } from "./agent-workspace";
+import { cmuxRpc } from "./cmux-rpc";
 import { initializeAgentPath } from "./path-environment";
 import type {
   Adapter,
@@ -2184,10 +2186,39 @@ function startServer() {
       if (prompt) sendPrompt(sess, prompt);
       return Response.json({ id: sess.id, url: `http://127.0.0.1:${server.port}${prefixedPath(`/s/${sess.id}`)}` });
     }
+    if (url.pathname === "/api/agent-workspace" && req.method === "GET") {
+      if (!hasTrustedOrigin(req)) return Response.json({ error: "untrusted_origin" }, { status: 403 });
+      const surfaceId = url.searchParams.get("surface") ?? "";
+      const workspaceId = url.searchParams.get("workspace") ?? "";
+      if (!/^[0-9a-f-]{36}$/i.test(surfaceId) || !/^[0-9a-f-]{36}$/i.test(workspaceId)) {
+        return Response.json({ error: "invalid_binding" }, { status: 400 });
+      }
+      const result = await cmuxRpc("mobile.chat.sessions", { workspace_id: workspaceId });
+      const payload = result.result as { sessions?: WorkspaceSessionBinding[] } | undefined;
+      if (!result.ok || !Array.isArray(payload?.sessions)) {
+        return Response.json({ error: "registry_unavailable" }, { status: 503 });
+      }
+      const source = resolveSurfaceTranscript(surfaceId);
+      // Keep the displayed root stable even if the terminal starts another agent.
+      if (!source || (url.searchParams.get("root") && url.searchParams.get("root") !== source.sessionId)) {
+        return Response.json({ error: "binding_missing" }, { status: 409 });
+      }
+      try {
+        const group = await discoverAgentWorkspace(source, payload.sessions, undefined, { workspaceID: workspaceId });
+        const memberId = url.searchParams.get("member");
+        if (memberId) {
+          const detail = await group.detail(memberId);
+          return detail ? Response.json(detail) : Response.json({ error: "member_missing" }, { status: 404 });
+        }
+        return Response.json(group.snapshot);
+      } catch {
+        return Response.json({ error: "binding_missing" }, { status: 409 });
+      }
+    }
     const terminalMatch = url.pathname.match(/^\/terminal\/([0-9A-Fa-f-]{8,64})\/?$/);
     if (terminalMatch && req.method === "GET") {
       const source = resolveSurfaceTranscript(terminalMatch[1]);
-      if (!source) return transcriptNotFoundPage();
+      if (!source || (url.searchParams.get("group") === "1" && url.searchParams.get("root") !== source.sessionId)) return transcriptNotFoundPage();
       const sess = ensureTranscriptSession(source);
       scheduleTranscriptDispose(sess);
       return new Response(null, { status: 302, headers: { location: `${prefixedPath(`/s/${sess.id}`)}${url.search}` } });

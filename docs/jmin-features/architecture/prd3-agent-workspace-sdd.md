@@ -174,3 +174,11 @@ Markdown/tool 출력은 데이터로 렌더링하고 임의 script 실행과 혼
 - [ADR-0003](../decisions/0003-agent-group-view-and-session-ownership.md)
 - [기능 문서 색인](../INDEX.md)
 - [agent-chat](../../../agent-chat/README.md)
+
+## 2026-10-29 구현 관찰 및 남은 차이
+
+`codex/agent-workspace`의 현재 구현은 기존 root terminal panel 안에서 메인 대화·입력, 한 멤버의 읽기 전용 detail, root native terminal을 표시한다. child 관찰은 실제 Claude subagent 파일·Teams config와 Codex spawn 결과/rollout·app-server thread_spawn metadata에서 읽으며 top-level split을 추가하지 않는다. Teams palette launcher는 같은 terminal을 자동 그룹 진입 대상으로 등록한다. group mode에서는 Claude in-process를 기본으로 하고 Codex watcher는 child TUI pane을 자동 attach하지 않는다. workspace의 다른 실제 세션은 미지정으로 남긴다.
+
+native host spike에서 다른 panel의 Ghostty view를 직접 빌려 오려면 Bonsplit·keyboard responder·portal ownership을 함께 바꿔야 함을 확인했다. 단일 renderer lease를 사용하는 native 통합을 구현했다. 같은 workspace의 live direct terminal은 원래 host를 양보하고 그룹의 root container 아래에서 동일 renderer를 표시한다. explicit CLI target ID와 실행 소유권은 보존한다. Canvas/remote-tmux/cloud/device/hibernating/다른 그룹이 빌린 terminal은 원래 소유 panel에서 focus하는 capability fallback을 유지한다. **native 앱 검증 전에는 그룹 내부 member terminal 호스팅을 완료로 표시하지 않는다.** Claude Teams membership 연결과 grouped Teams 실행에서 자동 pane 증가를 막는 경로는 구현했다. 기존 pane을 파괴하거나 실행 세션 소유권을 바꾸지 않는다. 이 문서의 승인된 요구를 완료된 것으로 낮춰 해석하지 않는다.
+
+메인 composer 유지·멤버 상세 race·identity/capability·인증된 실제 sidecar HTTP 동작과 웹 렌더링은 검증했다. native 앱 빌드/GUI·hibernation·키보드/portal 수명 검증은 Xcode 앱 빌드 후 수행해야 한다. 상세 실행 명령·검증·미완료 목록은 [구현 인계](../implementation/agent-workspace-handoff.md)를 따른다.

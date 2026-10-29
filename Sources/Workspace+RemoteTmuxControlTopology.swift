@@ -365,6 +365,9 @@ extension Workspace {
     /// tmux container projects to its authoritative active inner pane.
     func focusedTerminalInputTarget() -> (surfaceID: UUID, panel: TerminalPanel)? {
         guard let focusedPanelId else { return nil }
+        if let member = agentWorkspaceInputTarget(forRootPanelID: focusedPanelId) {
+            return (member.id, member)
+        }
         return terminalInputTarget(forPanelID: focusedPanelId)
     }
 

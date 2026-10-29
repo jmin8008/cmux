@@ -6354,12 +6354,7 @@ struct ContentView: View {
                     return
                 }
 
-                tabManager.newSurface(
-                    initialInput: Self.commandPaletteAgentLauncherShellInput(
-                        cliURL: cliURL,
-                        subcommand: subcommand
-                    )
-                )
+                launchAgentTeamsSurface(cliURL: cliURL, subcommand: subcommand, in: selectedWorkspace)
             }
         }
     }

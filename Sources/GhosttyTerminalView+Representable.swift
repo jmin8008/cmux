@@ -356,6 +356,12 @@ extension GhosttyTerminalView {
         // hand-off cannot let the old teardown hide the new owner's ring.
         if wasBoundToDismantledHost {
             hostedView?.setNotificationRing(visible: false)
+            // A newer host may already own this shared surface. Clear shared
+            // callbacks only while the dismantled host still owns them, and
+            // before vacating the lease can wake a replacement synchronously.
+            hostedView?.setFocusHandler(nil)
+            hostedView?.setTriggerFlashHandler(nil)
+            hostedView?.setDropZoneOverlay(zone: nil)
         }
 
         if let host {
@@ -374,11 +380,6 @@ extension GhosttyTerminalView {
             )
         }
 
-        // Preserve the portal lease across transient rebuilds, but reset the
-        // surface-local ring; the next reconciliation reapplies current state.
-        hostedView?.setFocusHandler(nil)
-        hostedView?.setTriggerFlashHandler(nil)
-        hostedView?.setDropZoneOverlay(zone: nil)
         coordinator.hostedView = nil
 
         nsView.subviews.forEach { $0.removeFromSuperview() }

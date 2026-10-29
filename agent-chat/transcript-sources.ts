@@ -2,7 +2,7 @@
 // stores cmux's agent hooks maintain (`~/.cmuxterm/<agent>-hook-sessions.json`).
 // Paths only ever come from those stores or the agents' own default layouts, so
 // the transcript view cannot be pointed at an arbitrary file.
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, statSync, openSync, readSync, closeSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { TranscriptAgent } from "./adapters/transcript";
@@ -215,4 +215,28 @@ export function transcriptAttention(agent: TranscriptAgent, sessionId: string, e
   const entry = readStore(resolvedEnv(env), agent).entries.find((e) => e.sessionId === sessionId);
   if (entry?.runtimeStatus !== "needsInput") return null;
   return entry.lastBody?.trim() || "The agent is waiting for input in the terminal.";
+}
+
+/** Resolve a Codex subagent without a terminal/hook entry only when its own
+ * session metadata names this parent. A conversation fork is not enough. */
+export function resolveCodexChildTranscript(parent: TranscriptSource, sessionId: string, env: TranscriptSourceEnv = {}): TranscriptSource | null {
+  if (parent.agent !== "codex" || !SESSION_ID.test(sessionId)) return null;
+  const path = findCodexRollout(resolvedEnv(env).codexHome, sessionId);
+  if (!path) return null;
+  let fd: number | undefined;
+  try {
+    fd = openSync(path, "r");
+    const buffer = Buffer.alloc(64 * 1024);
+    const count = readSync(fd, buffer, 0, buffer.length, 0);
+    for (const line of buffer.subarray(0, count).toString("utf8").split("\n")) {
+      let row: any;
+      try { row = JSON.parse(line); } catch { continue; }
+      if (row.type !== "session_meta") continue;
+      const metadata = row.payload;
+      if (metadata?.id !== sessionId || metadata?.source?.subagent?.thread_spawn?.parent_thread_id !== parent.sessionId) return null;
+      return { agent: "codex", sessionId, path, cwd: metadata.cwd, updatedAt: statSync(path).mtimeMs };
+    }
+  } catch { return null; }
+  finally { if (fd !== undefined) closeSync(fd); }
+  return null;
 }

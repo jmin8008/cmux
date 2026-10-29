@@ -3,7 +3,7 @@
 > 생성물. 손으로 고치지 않는다 → `docs-index.py` (또는 `/bnx-dev-plan-change`). 갱신 2026-10-29. 규약: `bnx-dev-contract-guide`.
 
 ## 📌 핸드오프 (최근 3)
-- (없음)
+- [PRD3 에이전트 작업 화면 구현 인계](implementation/agent-workspace-handoff.md) — 메인 대화와 입력을 유지하는 그룹 화면·실제 하위/팀 관계·Teams 자동 진입을 연결했으며, 같은 세션의 native renderer를 그룹에 표시하는 경로를 구현했으며 앱 검증은 진행 전이다. 대상: 사람·후속 개발 에이전트. · 2026-10-29 · active
 
 ## 📋 PRD
 - (없음)
@@ -31,14 +31,15 @@
 - [PRD4 알림과 추가 버튼 사이의 앱·웹 바로가기 설계](architecture/prd4-quick-launch-sdd.md) — 알림 종과 추가 버튼 사이에 바로가기 목록을 열고 앱·웹·localhost 주소를 등록해 재사용한다. 대상: 사람(설계 검토). · 2026-10-29 · draft
 
 ## 🏷 태그
-- `agent-workspace` (2): [PRD3 한 작업 화면에서 에이전트 대화와 ](architecture/prd3-agent-workspace-sdd.md) · [ADR-0003 에이전트 그룹 화면과 실행 ](decisions/0003-agent-group-view-and-session-ownership.md)
+- `agent-workspace` (3): [PRD3 한 작업 화면에서 에이전트 대화와 ](architecture/prd3-agent-workspace-sdd.md) · [ADR-0003 에이전트 그룹 화면과 실행 ](decisions/0003-agent-group-view-and-session-ownership.md) · [PRD3 에이전트 작업 화면 구현 인계](implementation/agent-workspace-handoff.md)
 - `architecture` (4): [PRD1 화면 선택 맥락을 터미널로 전달하는](architecture/prd1-browser-context-sdd.md) · [PRD2 패널을 창 밖으로 끌어 새 창으로 ](architecture/prd2-drag-out-window-sdd.md) · [PRD3 한 작업 화면에서 에이전트 대화와 ](architecture/prd3-agent-workspace-sdd.md) · [PRD4 알림과 추가 버튼 사이의 앱·웹 바](architecture/prd4-quick-launch-sdd.md)
 - `browser-context` (2): [PRD1 화면 선택 맥락을 터미널로 전달하는](architecture/prd1-browser-context-sdd.md) · [ADR-0001 화면 선택 맥락을 명시적인 ](decisions/0001-browser-context-handoff.md)
 - `decision` (4): [ADR-0001 화면 선택 맥락을 명시적인 ](decisions/0001-browser-context-handoff.md) · [ADR-0002 창 밖 드롭은 같은 프로세스](decisions/0002-live-panel-window-transfer.md) · [ADR-0003 에이전트 그룹 화면과 실행 ](decisions/0003-agent-group-view-and-session-ownership.md) · [ADR-0004 바로가기는 사용자 설정의 t](decisions/0004-local-quick-launch-registry.md)
+- `implementation` (1): [PRD3 에이전트 작업 화면 구현 인계](implementation/agent-workspace-handoff.md)
 - `jmin-fork` (8): [PRD1 화면 선택 맥락을 터미널로 전달하는](architecture/prd1-browser-context-sdd.md) · [PRD2 패널을 창 밖으로 끌어 새 창으로 ](architecture/prd2-drag-out-window-sdd.md) · [PRD3 한 작업 화면에서 에이전트 대화와 ](architecture/prd3-agent-workspace-sdd.md) · [PRD4 알림과 추가 버튼 사이의 앱·웹 바](architecture/prd4-quick-launch-sdd.md) · [ADR-0001 화면 선택 맥락을 명시적인 ](decisions/0001-browser-context-handoff.md) · [ADR-0002 창 밖 드롭은 같은 프로세스](decisions/0002-live-panel-window-transfer.md)
 - `prd1` (2): [PRD1 화면 선택 맥락을 터미널로 전달하는](architecture/prd1-browser-context-sdd.md) · [ADR-0001 화면 선택 맥락을 명시적인 ](decisions/0001-browser-context-handoff.md)
 - `prd2` (2): [PRD2 패널을 창 밖으로 끌어 새 창으로 ](architecture/prd2-drag-out-window-sdd.md) · [ADR-0002 창 밖 드롭은 같은 프로세스](decisions/0002-live-panel-window-transfer.md)
-- `prd3` (2): [PRD3 한 작업 화면에서 에이전트 대화와 ](architecture/prd3-agent-workspace-sdd.md) · [ADR-0003 에이전트 그룹 화면과 실행 ](decisions/0003-agent-group-view-and-session-ownership.md)
+- `prd3` (3): [PRD3 한 작업 화면에서 에이전트 대화와 ](architecture/prd3-agent-workspace-sdd.md) · [ADR-0003 에이전트 그룹 화면과 실행 ](decisions/0003-agent-group-view-and-session-ownership.md) · [PRD3 에이전트 작업 화면 구현 인계](implementation/agent-workspace-handoff.md)
 - `prd4` (2): [PRD4 알림과 추가 버튼 사이의 앱·웹 바](architecture/prd4-quick-launch-sdd.md) · [ADR-0004 바로가기는 사용자 설정의 t](decisions/0004-local-quick-launch-registry.md)
 - `quick-launch` (2): [PRD4 알림과 추가 버튼 사이의 앱·웹 바](architecture/prd4-quick-launch-sdd.md) · [ADR-0004 바로가기는 사용자 설정의 t](decisions/0004-local-quick-launch-registry.md)
 - `window-transfer` (2): [PRD2 패널을 창 밖으로 끌어 새 창으로 ](architecture/prd2-drag-out-window-sdd.md) · [ADR-0002 창 밖 드롭은 같은 프로세스](decisions/0002-live-panel-window-transfer.md)

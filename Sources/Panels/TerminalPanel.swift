@@ -59,6 +59,10 @@ final class TerminalPanel: Panel, ObservableObject {
     @Published private(set) var tmuxLayoutReport: TmuxPaneLayoutReport?
     let shellActivity = TerminalPanelShellActivityModel()
     let restoreRecovery = AgentRestoreRecoveryPresentation()
+    @Published var agentWorkspace: AgentWorkspacePresentation? {
+        didSet { agentWorkspacePresentationDidChange(previous: oldValue) }
+    }
+    @Published var agentWorkspaceRendererLease: AgentWorkspaceRendererLease?
     let textBoxState = TerminalPanelTextBoxState()
     @Published var isTextBoxActive: Bool = false
     @Published var textBoxContent: String = ""
@@ -104,7 +108,12 @@ final class TerminalPanel: Panel, ObservableObject {
     /// (hostedView.window == nil) until the user switches workspaces.
     @Published var viewReattachToken: UInt64 = 0
 
-    @Published var agentHibernationPhase: AgentHibernationPanelPhase = .live
+    @Published var agentHibernationPhase: AgentHibernationPanelPhase = .live {
+        didSet {
+            if case .live = agentHibernationPhase { return }
+            revokeAgentWorkspaceRenderer()
+        }
+    }
     /// Set when an agent woken from hibernation did not come back; drives
     /// `AgentWakeFailureBanner`.
     @Published var agentWakeFailure: AgentWakeFailure?
@@ -276,6 +285,12 @@ final class TerminalPanel: Panel, ObservableObject {
     }
 
     func updateWorkspaceId(_ newWorkspaceId: UUID) {
+        // The group is scoped to one workspace; moving the terminal restores
+        // its ordinary presentation without changing its process lifetime.
+        if workspaceId != newWorkspaceId {
+            revokeAgentWorkspaceRenderer()
+            agentWorkspace = nil
+        }
         workspaceId = newWorkspaceId
         surface.updateWorkspaceId(newWorkspaceId)
     }
@@ -627,6 +642,14 @@ final class TerminalPanel: Panel, ObservableObject {
             _ = requestAgentHibernationResume(focus: true)
             return
         }
+        if let agentWorkspace, agentWorkspace.routesFindToWebContent {
+            agentWorkspace.focus()
+            return
+        }
+        if let selected = agentWorkspace?.selectedTerminalPanel, selected !== self {
+            selected.focus(focusTransactionId: focusTransactionId)
+            return
+        }
         focusTerminalSurface(
             respectForeignFirstResponder: true,
             focusTransactionId: focusTransactionId
@@ -681,6 +704,9 @@ final class TerminalPanel: Panel, ObservableObject {
     }
 
     func unfocus() {
+        if let selected = agentWorkspace?.selectedTerminalPanel, selected !== self {
+            selected.unfocus()
+        }
         surface.setFocus(false)
         shouldFocusTextBoxWhenAvailable = false
         shouldOpenTextBoxFilePickerWhenAvailable = false
@@ -695,6 +721,8 @@ final class TerminalPanel: Panel, ObservableObject {
     }
 
     func close() {
+        revokeAgentWorkspaceRenderer()
+        agentWorkspace = nil
         isClosingPanel = true
         GlobalSearchCoordinator.shared.purgePanel(id: id)
         AgentHibernationController.shared.discardTrackingStateForClosedPanel(
@@ -728,92 +756,6 @@ final class TerminalPanel: Panel, ObservableObject {
         )
 #endif
         surface.teardownSurface()
-    }
-
-    func requestViewReattach() {
-        viewReattachToken &+= 1
-    }
-
-    /// Monotonic model ownership epoch across container transfers and local
-    /// representable reattachments. This takes precedence over host creation
-    /// order when a move rolls back to an earlier view.
-    var portalHostOwnershipGeneration: UInt64 {
-        surface.currentPortalHostOwnershipGeneration() &+ viewReattachToken
-    }
-
-    func recordPortalHostOwnershipChange() {
-        requestViewReattach()
-    }
-
-    // MARK: - Terminal-specific methods
-
-    @discardableResult
-    func sendText(_ text: String) -> Bool {
-        sendTextResult(text).accepted
-    }
-
-    func sendTextResult(_ text: String) -> TerminalSurface.TextSendResult {
-        resumeForExplicitInputIfNeeded()
-        return surface.sendTextResult(text)
-    }
-
-    func sendInput(_ text: String) {
-        _ = sendInputResult(text)
-    }
-
-    @discardableResult
-    func sendInputResult(_ text: String) -> TerminalSurface.InputSendResult {
-        resumeForExplicitInputIfNeeded()
-        return surface.sendInputResult(text)
-    }
-
-    @discardableResult
-    func sendNamedKeyResult(_ keyName: String) -> TerminalSurface.NamedKeySendResult {
-        resumeForExplicitInputIfNeeded()
-        return surface.sendNamedKey(keyName)
-    }
-
-    @discardableResult
-    func sendNamedKey(_ keyName: String) -> Bool {
-        switch sendNamedKeyResult(keyName) {
-        case .sent, .queued:
-            return true
-        case .unknownKey, .inputQueueFull, .surfaceUnavailable, .processExited:
-            return false
-        }
-    }
-
-    func performBindingAction(_ action: String) -> Bool {
-        guard !isAgentHibernated else { return false }
-        return surface.performExplicitInputBindingAction(action)
-    }
-
-    @discardableResult
-    func clearScreenKeepingScrollback() -> Bool {
-        resumeForExplicitInputIfNeeded()
-        return surface.clearScreenKeepingScrollback()
-    }
-
-    private func resumeForExplicitInputIfNeeded() {
-        guard isAgentHibernated else { return }
-        _ = requestAgentHibernationResume(focus: false)
-    }
-
-    /// A viewer attaching from another device is visiting this terminal, the
-    /// same as selecting its tab here. Resume a hibernated agent so the attach
-    /// mirrors a live runtime instead of a torn-down surface.
-    func resumeAgentHibernationForRemoteAttach() {
-        guard isAgentHibernated else { return }
-        _ = requestAgentHibernationResume(focus: false)
-    }
-
-    @discardableResult
-    private func requestAgentHibernationResume(focus: Bool) -> Bool {
-        guard isAgentHibernated else { return false }
-        if let onRequestAgentHibernationResume {
-            return onRequestAgentHibernationResume(focus)
-        }
-        return prepareAgentHibernationResume().didResume
     }
 
     func hasSelection() -> Bool {
@@ -857,6 +799,12 @@ final class TerminalPanel: Panel, ObservableObject {
 
     func captureFocusIntent(in window: NSWindow?) -> PanelFocusIntent {
         guard !isAgentHibernated else { return .panel }
+        if let group = agentWorkspace {
+            if group.routesFindToWebContent { return .panel }
+            if let selected = group.selectedTerminalPanel, selected !== self {
+                return selected.captureFocusIntent(in: window)
+            }
+        }
         if textBoxOwnsResponder(window?.firstResponder) {
             return .terminal(.textBoxInput)
         }
@@ -865,6 +813,12 @@ final class TerminalPanel: Panel, ObservableObject {
 
     func preferredFocusIntentForActivation() -> PanelFocusIntent {
         guard !isAgentHibernated else { return .panel }
+        if let group = agentWorkspace {
+            if group.routesFindToWebContent { return .panel }
+            if let selected = group.selectedTerminalPanel, selected !== self {
+                return selected.preferredFocusIntentForActivation()
+            }
+        }
         if isTextBoxActive, textBoxInputFocusIntent == .textBox {
             return .terminal(.textBoxInput)
         }
@@ -873,6 +827,13 @@ final class TerminalPanel: Panel, ObservableObject {
 
     func prepareFocusIntentForActivation(_ intent: PanelFocusIntent) {
         guard !isAgentHibernated else { return }
+        if let group = agentWorkspace {
+            if group.routesFindToWebContent { return }
+            if let selected = group.selectedTerminalPanel, selected !== self {
+                selected.prepareFocusIntentForActivation(intent)
+                return
+            }
+        }
         guard case .terminal(let target) = intent else { return }
         switch target {
         case .surface, .findField:
@@ -890,6 +851,12 @@ final class TerminalPanel: Panel, ObservableObject {
 
     @discardableResult
     func restoreFocusIntent(_ intent: PanelFocusIntent) -> Bool {
+        if let group = agentWorkspace {
+            if group.routesFindToWebContent { group.focus(); return true }
+            if let selected = group.selectedTerminalPanel, selected !== self {
+                return selected.restoreFocusIntent(intent)
+            }
+        }
         if isAgentHibernated {
             return requestAgentHibernationResume(focus: true)
         }
@@ -913,6 +880,13 @@ final class TerminalPanel: Panel, ObservableObject {
 
     func ownedFocusIntent(for responder: NSResponder, in window: NSWindow) -> PanelFocusIntent? {
         guard !isAgentHibernated else { return nil }
+        if let group = agentWorkspace {
+            if let view = responder as? NSView,
+               view === group.webView || view.isDescendant(of: group.webView) { return .panel }
+            if let selected = group.selectedTerminalPanel, selected !== self {
+                return selected.ownedFocusIntent(for: responder, in: window)
+            }
+        }
         _ = window
         if textBoxOwnsResponder(responder) {
             return .terminal(.textBoxInput)
@@ -924,6 +898,17 @@ final class TerminalPanel: Panel, ObservableObject {
     @discardableResult
     func yieldFocusIntent(_ intent: PanelFocusIntent, in window: NSWindow) -> Bool {
         guard !isAgentHibernated else { return false }
+        if let group = agentWorkspace {
+            if group.routesFindToWebContent, case .panel = intent {
+                guard let responder = window.firstResponder,
+                      ownedFocusIntent(for: responder, in: window) != nil else { return false }
+                window.makeFirstResponder(nil)
+                return true
+            }
+            if let selected = group.selectedTerminalPanel, selected !== self {
+                return selected.yieldFocusIntent(intent, in: window)
+            }
+        }
         guard case .terminal(let target) = intent else { return false }
         if target == .textBoxInput {
             guard let firstResponder = window.firstResponder,

@@ -899,6 +899,11 @@ export function useSession(): SessionState {
     return false;
   }, [sendRaw, start]);
   const focusTerminal = useCallback(() => {
+    const groupBridge = (window as any).webkit?.messageHandlers?.cmuxAgentWorkspace;
+    if (new URLSearchParams(location.search).get("group") === "1" && groupBridge) {
+      groupBridge.postMessage({ action: "root-terminal", sessionId: sessionIdRef.current?.replace(/^t-/, "") });
+      return;
+    }
     if (sessionIdRef.current) sendRaw({ op: "focus-terminal", sessionId: sessionIdRef.current });
   }, [sendRaw]);
   const stop = useCallback(() => {

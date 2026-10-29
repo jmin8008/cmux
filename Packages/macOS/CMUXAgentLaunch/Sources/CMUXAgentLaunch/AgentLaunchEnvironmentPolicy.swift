@@ -112,6 +112,7 @@ public struct AgentLaunchEnvironmentPolicy: Sendable {
         // Selects the directory holding Claude Code's .credentials.json. A path, not a secret,
         // so restoring it keeps a restored agent on the account it launched with.
         "CLAUDE_SECURESTORAGE_CONFIG_DIR",
+        "CMUX_AGENT_WORKSPACE",
         "CMUX_CUSTOM_CLAUDE_PATH",
         "CMUX_CUSTOM_AMP_PATH",
         "CMUX_CUSTOM_CODEX_PATH",
@@ -325,6 +326,8 @@ public struct AgentLaunchEnvironmentPolicy: Sendable {
     public func sanitizedValue(key: String, value: String?) -> String? {
         guard Self.safeEnvironmentKeys.contains(key) else { return nil }
         switch key {
+        case "CMUX_AGENT_WORKSPACE":
+            return value == "1" ? "1" : nil
         case "CLAUDE_CONFIG_DIR":
             return value.map { ClaudeConfigDirectoryPath.preferredPath($0) }
         case "NODE_OPTIONS":

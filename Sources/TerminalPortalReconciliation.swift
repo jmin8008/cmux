@@ -204,9 +204,13 @@ extension GhosttyTerminalView {
             snapshot.onFocus?(terminalSurface.id)
         }
         hostedView.setTriggerFlashHandler(snapshot.onTriggerFlash)
+        // Pane layout drops belong to the group container, while file/text
+        // insertion still uses this exact hostedView's existing terminal.
+        let dropPanelID = terminalSurface.owningWorkspace()?
+            .agentWorkspaceFocusContainer(forSurfaceID: terminalSurface.id) ?? terminalSurface.id
         hostedView.setPaneDropContext(TerminalPaneDropContext(
             workspaceId: terminalSurface.tabId,
-            panelId: terminalSurface.id,
+            panelId: dropPanelID,
             paneId: snapshot.paneId
         ))
         hostedView.setInactiveOverlay(

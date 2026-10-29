@@ -897,3 +897,26 @@ details.thinking .t-body { white-space: pre-wrap; font-size: calc(var(--font-siz
   position: static; width: 100%; max-width: 100%; min-height: 300px;
 }
 .gallery-picker-static .model-picker-shell { height: 340px; }
+
+/* Keep the main composer mounted while one member expands. */
+.agent-workspace { display:flex; flex-direction:column; height:100%; min-height:0; width:100%; }
+.agent-workspace-header { display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:1px solid var(--border, #6664); flex-wrap:wrap; }
+.agent-workspace-header strong { margin-inline-end:auto; }
+.agent-workspace button { color:inherit; background:transparent; border:1px solid var(--border, #6664); border-radius:6px; padding:5px 9px; cursor:default; }
+.agent-workspace button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.agent-workspace button:disabled { opacity:.45; cursor:default; }
+.agent-workspace-main { display:flex; min-height:180px; flex:1; overflow:hidden; }
+.agent-workspace-main #chat-view { width:100%; }
+.agent-workspace-members { flex:0 1 38%; overflow:auto; min-height:36px; border-top:1px solid var(--border, #6664); padding:8px 12px; }
+.agent-workspace-members nav { display:flex; flex-wrap:wrap; gap:6px; }
+.agent-workspace-members nav button { max-width:240px; text-align:start; }
+.agent-workspace-members nav span { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.agent-workspace-members small, .agent-workspace-hint { display:block; opacity:.65; font-size:11px; }
+.agent-workspace-members button[aria-expanded=true], .agent-workspace-tabs [aria-selected=true] { border-color:var(--accent); }
+.agent-workspace-tabs { display:flex; gap:6px; margin-top:10px; }
+.agent-workspace-detail { padding-top:6px; }
+.agent-workspace-event { padding:6px 0; }
+.agent-workspace-event.user { opacity:.75; }
+.agent-workspace-tool pre { white-space:pre-wrap; overflow-wrap:anywhere; }
+
+.agent-workspace-events, .agent-workspace-events * { user-select:text; -webkit-user-select:text; }

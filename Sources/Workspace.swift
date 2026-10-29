@@ -11677,6 +11677,7 @@ final class Workspace: Identifiable, ObservableObject, FilePreviewTabMetadataHos
         surfaceTransferringPanelIds.insert(panelId)
         defer { surfaceTransferringPanelIds.remove(panelId) }
         if let terminalPanel = sourcePanel as? TerminalPanel {
+            terminalPanel.revokeAgentWorkspaceRenderer()
             terminalFontSizeChangeCoordinator?
                 .terminalWillLeaveWorkspace(
                     terminalPanel,
@@ -12074,22 +12075,6 @@ final class Workspace: Identifiable, ObservableObject, FilePreviewTabMetadataHos
     }
     // MARK: - Focus Management
 
-    /// Converges the workspace pane selection when a mounted terminal accepts
-    /// user input. Cloud manual-mirror surfaces can receive an input event
-    /// while their portal focus callback is still being rebound; keeping this
-    /// guard at the workspace boundary makes the active pane border and the
-    /// keyboard target follow the same selected workspace.
-    @discardableResult
-    func focusPanelFromTerminalInput(_ panelId: UUID) -> Bool {
-        guard panels[panelId] != nil,
-              (owningTabManager ?? AppDelegate.shared?.tabManagerFor(tabId: id))?.selectedTabId == id,
-              focusedPanelId != panelId else {
-            return false
-        }
-        focusPanel(panelId, trigger: .terminalFirstResponder)
-        return true
-    }
-
     /// Focuses a panel a split just created. `previousHostedView` is the terminal that
     /// had focus before Bonsplit moved it. SwiftUI reparents that view into the new
     /// split, which would trigger onFocus + ghostty_surface_set_focus on it and steal
@@ -12481,6 +12466,7 @@ final class Workspace: Identifiable, ObservableObject, FilePreviewTabMetadataHos
                 )
             }
         } else {
+            releaseAgentWorkspaceRenderers()
             clearLayoutFollowUp()
             hideAllTerminalPortalViews()
             hideAllBrowserPortalViews()
@@ -13128,7 +13114,7 @@ final class Workspace: Identifiable, ObservableObject, FilePreviewTabMetadataHos
     /// This keeps AppKit bounds and Ghostty surface sizes in sync in the next runloop turn.
     private func reconcileTerminalGeometryPass() -> Bool {
         var needsFollowUpPass = false
-        let visiblePanelIds = renderedVisiblePanelIdsForCurrentLayout()
+        let visiblePanelIds = agentWorkspaceRenderedTerminalIDs(renderedVisiblePanelIdsForCurrentLayout())
 
         // Flush pending AppKit layout first so terminal-host bounds reflect
         // latest split topology. Keep the flush scoped to this workspace's
@@ -13261,7 +13247,7 @@ final class Workspace: Identifiable, ObservableObject, FilePreviewTabMetadataHos
 
     @discardableResult
     func reconcileTerminalPortalVisibilityForCurrentRenderedLayout() -> Bool {
-        let visiblePanelIds = renderedVisiblePanelIdsForCurrentLayout()
+        let visiblePanelIds = agentWorkspaceRenderedTerminalIDs(renderedVisiblePanelIdsForCurrentLayout())
         let dimsUnfocusedTerminals = hasMultipleSplitSurfaces
         // Focus-exclusivity: when the right sidebar (Dock) owns input focus in this
         // window, no main terminal should be (re)marked active even if it is still
@@ -13283,7 +13269,9 @@ final class Workspace: Identifiable, ObservableObject, FilePreviewTabMetadataHos
                 terminalPanel.hostedView.setVisibleInUI(shouldBeVisible)
                 didChange = true
             }
-            let shouldBeActive = shouldBeVisible && focusedPanelId == terminalPanel.id && !rightSidebarOwnsFocus
+            let containerID = agentWorkspaceFocusContainer(forSurfaceID: terminalPanel.id)
+            let groupAllowsInput = terminalPanel.agentWorkspaceRendererLease?.presentation?.terminalOwnsFocus ?? true
+            let shouldBeActive = shouldBeVisible && focusedPanelId == containerID && !rightSidebarOwnsFocus && groupAllowsInput
             if terminalPanel.hostedView.debugPortalActive != shouldBeActive {
                 terminalPanel.hostedView.setActive(shouldBeActive)
                 didChange = true
@@ -13305,7 +13293,7 @@ final class Workspace: Identifiable, ObservableObject, FilePreviewTabMetadataHos
     }
 
     private func terminalPortalVisibilityNeedsFollowUp() -> Bool {
-        let visiblePanelIds = renderedVisiblePanelIdsForCurrentLayout()
+        let visiblePanelIds = agentWorkspaceRenderedTerminalIDs(renderedVisiblePanelIdsForCurrentLayout())
 
         for panel in panels.values {
             guard let terminalPanel = panel as? TerminalPanel else { continue }

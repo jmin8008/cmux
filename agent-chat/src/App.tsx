@@ -3,6 +3,7 @@ import { Tooltip } from "@base-ui-components/react/tooltip";
 import { useSession, type SessionState } from "./session";
 import { RepositorySlugContext, SessionContext } from "./context";
 import { Composer } from "./components/Composer";
+import { AgentWorkspace, agentWorkspaceEnabled } from "./components/AgentWorkspace";
 import { Chat } from "./components/Chat";
 import { useOverlayScrollbars } from "./hooks/useOverlayScrollbars";
 import { useTypeToFocus } from "./hooks/useTypeToFocus";
@@ -20,7 +21,7 @@ export function App() {
       <SessionContext.Provider value={s}>
         <RepositorySlugContext.Provider value={repositorySlug}>
           <main id="main">
-            {!s.ready && s.phase === "composer" ? null : s.phase === "chat" ? <Chat /> : <Composer />}
+            {!s.ready && s.phase === "composer" ? null : s.phase === "chat" ? (agentWorkspaceEnabled() ? <AgentWorkspace><Chat /></AgentWorkspace> : <Chat />) : <Composer />}
           </main>
         </RepositorySlugContext.Provider>
       </SessionContext.Provider>

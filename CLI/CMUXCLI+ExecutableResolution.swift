@@ -266,7 +266,7 @@ extension CMUXCLI {
         guard !claudeTeamsHasExplicitTeammateMode(commandArgs: commandArgs) else {
             return commandArgs
         }
-        return ["--teammate-mode", "auto"] + commandArgs
+        return ["--teammate-mode", AgentWorkspaceLaunchPolicy.defaultClaudeTeammateMode()] + commandArgs
     }
 
     func claudeTeamsHasExplicitSystemPrompt(commandArgs: [String]) -> Bool {
@@ -311,7 +311,8 @@ extension CMUXCLI {
     /// callers/tests that expect that pair first keep working.
     func claudeTeamsExecArguments(commandArgs: [String]) -> [String] {
         let base = claudeTeamsLaunchArguments(commandArgs: commandArgs)
-        guard !claudeTeamsHasExplicitSystemPrompt(commandArgs: commandArgs) else {
+        guard !AgentWorkspaceLaunchPolicy.isEnabled(),
+              !claudeTeamsHasExplicitSystemPrompt(commandArgs: commandArgs) else {
             return base
         }
         let nudge = ["--append-system-prompt", claudeTeamsTeamSpawnGuidance]
@@ -429,5 +430,31 @@ extension CMUXCLI {
             return index
         }
         return nil
+    }
+}
+
+extension CMUXCLI {
+    static func codexTeamsResolvedWorkingDirectory(
+        commandArgs: [String],
+        baseDirectory: String
+    ) -> String? {
+        CodexTeamsApprovalBridge.resolvedWorkingDirectory(
+            commandArgs: commandArgs,
+            baseDirectory: baseDirectory
+        )
+    }
+
+    static func validateCodexTeamsWorkingDirectory(
+        commandArgs: [String],
+        baseDirectory: String
+    ) throws {
+        do {
+            try CodexTeamsApprovalBridge.validateWorkingDirectory(
+                commandArgs: commandArgs,
+                baseDirectory: baseDirectory
+            )
+        } catch {
+            throw CLIError(message: error.localizedDescription)
+        }
     }
 }

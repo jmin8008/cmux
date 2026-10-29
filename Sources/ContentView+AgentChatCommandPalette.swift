@@ -144,9 +144,21 @@ extension ContentView {
     /// Formats the exact bundled-CLI command injected into the new terminal tab.
     nonisolated static func commandPaletteAgentLauncherShellInput(
         cliURL: URL,
-        subcommand: String
+        subcommand: String,
+        groupPresentation: Bool = false
     ) -> String {
-        "\(cliURL.path.terminalShellEscaped) \(subcommand.terminalShellEscaped)\n"
+        let prefix = groupPresentation ? "CMUX_AGENT_WORKSPACE=1 " : ""
+        return "\(prefix)\(cliURL.path.terminalShellEscaped) \(subcommand.terminalShellEscaped)\n"
+    }
+
+    func launchAgentTeamsSurface(cliURL: URL, subcommand: String, in workspace: Workspace) {
+        let groupPresentation = CmuxFeatureFlags.shared.isAgentChatUIEnabled
+        let panelID = tabManager.newSurface(initialInput: Self.commandPaletteAgentLauncherShellInput(
+            cliURL: cliURL, subcommand: subcommand, groupPresentation: groupPresentation
+        ))
+        if groupPresentation, let panelID {
+            workspace.openAgentWorkspaceWhenReady(terminalPanelId: panelID)
+        }
     }
 
     /// Registers thin palette handlers that delegate launch ownership to the bundled CLI.

@@ -9,7 +9,8 @@ extension GhosttyNSView {
         case .workspace:
             AppDelegate.shared?.noteTerminalKeyboardFocusIntent(
                 workspaceId: terminalSurface.tabId,
-                panelId: terminalSurface.id,
+                panelId: terminalSurface.owningWorkspace()?
+                    .agentWorkspaceFocusContainer(forSurfaceID: terminalSurface.id) ?? terminalSurface.id,
                 in: window
             )
             // The portal callback normally converges Bonsplit's selected pane

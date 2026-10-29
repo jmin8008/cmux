@@ -951,19 +951,22 @@ class TabManager: ObservableObject {
     }
 
     var isFindVisible: Bool {
-        selectedTerminalPanel?.searchState != nil ||
+        activeAgentWorkspacePresentation?.showsFind == true ||
+            selectedTerminalPanel?.searchState != nil ||
             focusedBrowserPanel?.searchState != nil ||
             focusedMarkdownPanel?.searchState != nil ||
             focusedTextFilePreviewPanel?.isTextFindBarVisible == true
     }
 
     var canUseSelectionForFind: Bool {
-        selectedTerminalPanel?.hasSelection() == true ||
+        activeAgentWorkspacePresentation != nil ||
+            selectedTerminalPanel?.hasSelection() == true ||
             focusedTextFilePreviewPanel?.canUseSelectionForFind == true
     }
 
     @discardableResult
     func startSearch() -> Bool {
+        if let presentation = activeAgentWorkspacePresentation { presentation.startFind(); return true }
         if let panel = selectedTerminalPanel {
             let hadExistingSearch = panel.searchState != nil
             panel.hostedView.preparePanelFocusIntentForActivation(.findField)
@@ -1000,6 +1003,7 @@ class TabManager: ObservableObject {
     }
 
     func searchSelection() {
+        if let presentation = activeAgentWorkspacePresentation { presentation.findSelection(); return }
         if let panel = selectedTerminalPanel {
             if panel.searchState == nil {
                 panel.searchState = TerminalSurface.SearchState()
@@ -1018,6 +1022,7 @@ class TabManager: ObservableObject {
     }
 
     func findNext() {
+        if let presentation = activeAgentWorkspacePresentation { presentation.find(); return }
         if let panel = selectedTerminalPanel {
             _ = TerminalSearchNavigation.next.perform { panel.performBindingAction($0) }
             return
@@ -1035,6 +1040,7 @@ class TabManager: ObservableObject {
     }
 
     func findPrevious() {
+        if let presentation = activeAgentWorkspacePresentation { presentation.find(backwards: true); return }
         if let panel = selectedTerminalPanel {
             _ = TerminalSearchNavigation.previous.perform { panel.performBindingAction($0) }
             return
@@ -1178,6 +1184,7 @@ class TabManager: ObservableObject {
     }
 
     func hideFind() {
+        if let presentation = activeAgentWorkspacePresentation { presentation.hideFind(); return }
         if let panel = selectedTerminalPanel {
             panel.surface.closeSearchFromExplicitInput()
             return
@@ -4732,20 +4739,6 @@ class TabManager: ObservableObject {
     /// Select the last surface in the currently focused pane of the selected workspace
     func selectLastSurface() {
         selectedWorkspace?.selectLastSurface()
-    }
-
-    /// Create a new terminal surface in the focused pane of the selected workspace
-    func newSurface() {
-        AppDelegate.shared?.leaveChiefHome(in: self)
-        // Cmd+T should always focus the newly created surface.
-        selectedWorkspace?.clearSplitZoom()
-        selectedWorkspace?.newTerminalSurfaceInFocusedPane(focus: true)
-    }
-
-    func newSurface(initialInput: String) {
-        AppDelegate.shared?.leaveChiefHome(in: self)
-        selectedWorkspace?.clearSplitZoom()
-        selectedWorkspace?.newTerminalSurfaceInFocusedPane(focus: true, initialInput: initialInput)
     }
 
     // MARK: - Split Creation

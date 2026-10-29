@@ -27792,6 +27792,19 @@ struct CMUXCLI {
 
         private func observeThread(_ thread: CodexTeamsThread) throws {
             threadById[thread.id] = thread
+            if AgentWorkspaceLaunchPolicy.isEnabled() {
+                let snapshot = AgentWorkspaceCodexSnapshot(
+                    workspaceID: workspaceId, surfaceID: rootSurfaceId,
+                    threads: threadById.values.sorted { $0.id < $1.id }.map {
+                        AgentWorkspaceCodexThread(id: $0.id, parentThreadID: $0.spawn?.parentThreadId,
+                                                  label: $0.agentNickname ?? $0.agentRole, status: $0.statusType)
+                    }
+                )
+                let directory = ProcessInfo.processInfo.environment["CMUX_AGENT_WORKSPACE_DIRECTORY"]
+                    .map { URL(fileURLWithPath: $0, isDirectory: true) }
+                    ?? CmuxConfigLocation().directory.appendingPathComponent("agent-workspace")
+                try? snapshot.write(directory: directory)
+            }
             if knownThreadIds.contains(thread.id) {
                 if let spawn = thread.spawn {
                     if parentByThreadId[thread.id] == nil {
@@ -27848,6 +27861,9 @@ struct CMUXCLI {
             let parentDepth = depthByThreadId[spawn.parentThreadId]
             let depth = parentDepth.map { $0 + 1 } ?? max(spawn.sourceDepth ?? 1, 1)
             depthByThreadId[thread.id] = depth
+            // The app-server already owns this running child. Group presentation
+            // does not attach another TUI or allocate a top-level cmux surface.
+            guard !AgentWorkspaceLaunchPolicy.isEnabled() else { return }
             guard depth <= maxAutoDepth else {
                 codexTeamsDiscardAttachableThreadId(thread.id)
                 reportSubagentDiagnosticOnce(
@@ -28540,30 +28556,6 @@ struct CMUXCLI {
             .map(String.init)
             .filter { !$0.isEmpty }
             .joined(separator: ":") ?? ""
-    }
-
-    static func codexTeamsResolvedWorkingDirectory(
-        commandArgs: [String],
-        baseDirectory: String
-    ) -> String? {
-        CodexTeamsApprovalBridge.resolvedWorkingDirectory(
-            commandArgs: commandArgs,
-            baseDirectory: baseDirectory
-        )
-    }
-
-    static func validateCodexTeamsWorkingDirectory(
-        commandArgs: [String],
-        baseDirectory: String
-    ) throws {
-        do {
-            try CodexTeamsApprovalBridge.validateWorkingDirectory(
-                commandArgs: commandArgs,
-                baseDirectory: baseDirectory
-            )
-        } catch {
-            throw CLIError(message: error.localizedDescription)
-        }
     }
 
     private func codexTeamsAppendPathEntry(
