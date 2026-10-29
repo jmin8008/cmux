@@ -7,6 +7,96 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "quickLaunch": {
+      "type": "object",
+      "description": "Global application and web shortcuts. Managed through the titlebar Quick Launch list.",
+      "x-cmux-scopes": [
+        "global"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "entries"
+      ],
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "name",
+              "target",
+              "openMode",
+              "reusePolicy",
+              "symbol"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "target": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "url"
+                ],
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "web",
+                      "app"
+                    ]
+                  },
+                  "url": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "bundleIdentifier": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "bookmark": {
+                    "type": "string"
+                  }
+                }
+              },
+              "openMode": {
+                "enum": [
+                  "in-app",
+                  "system-browser",
+                  "native"
+                ]
+              },
+              "reusePolicy": {
+                "const": "focus-or-open"
+              },
+              "symbol": {
+                "enum": [
+                  "globe",
+                  "star",
+                  "bolt",
+                  "terminal",
+                  "hammer",
+                  "book",
+                  "app"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
     "$schema": {
       "type": "string",
       "format": "uri",

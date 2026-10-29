@@ -617,7 +617,7 @@ struct TitlebarControlsHoverPolicyTests {
                     TitlebarNewWorkspaceSplitButtonMetrics.primaryWidth(config: config)
                 case .some(.newWorkspaceMenu):
                     TitlebarNewWorkspaceSplitButtonMetrics.dropdownWidth(config: config)
-                case .some(.toggleSidebar), .some(.showNotifications), .some(.focusHistoryBack), .some(.focusHistoryForward), nil:
+                case .some(.toggleSidebar), .some(.showNotifications), .some(.quickLaunch), .some(.focusHistoryBack), .some(.focusHistoryForward), nil:
                     config.buttonSize
                 }
                 checkEqual(
@@ -627,6 +627,20 @@ struct TitlebarControlsHoverPolicyTests {
                     "Expected titlebar hit lane width to match its visible control for style \(style)"
                 )
             }
+        }
+    }
+
+    @Test
+    func testQuickLaunchSitsBetweenNotificationsAndNewWorkspace() {
+        for style in TitlebarControlsStyle.allCases {
+            let config = style.config
+            let bell = TitlebarControlsHitRegions.buttonXRange(for: .showNotifications, config: config)!
+            let shortcuts = TitlebarControlsHitRegions.buttonXRange(for: .quickLaunch, config: config)!
+            let add = TitlebarControlsHitRegions.buttonXRange(for: .newTab, config: config)!
+            checkEqual(shortcuts.lowerBound, bell.upperBound + config.spacing, accuracy: 0.001)
+            checkEqual(add.lowerBound, shortcuts.upperBound + config.spacing, accuracy: 0.001)
+            checkEqual(TitlebarControlsHitRegions.sidebarActionSlot(
+                at: NSPoint(x: (shortcuts.lowerBound + shortcuts.upperBound) / 2, y: 10), config: config), .quickLaunch)
         }
     }
 

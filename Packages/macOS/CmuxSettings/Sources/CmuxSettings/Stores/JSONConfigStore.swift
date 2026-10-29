@@ -97,6 +97,48 @@ public actor JSONConfigStore {
         return Value.decodeFromJSON(raw) ?? key.defaultValue
     }
 
+    public func quickLaunchState() -> QuickLaunchState {
+        do {
+            return .ready(try QuickLaunchRegistry.decode(readFromDisk()["quickLaunch"]))
+        } catch {
+            return .unreadable
+        }
+    }
+
+    /// Entry-level edits use the latest document under the shared writer lock.
+    public func applyQuickLaunch(_ mutation: QuickLaunchMutation) async throws {
+        _ = try await mutateRoot(validateSemantics: true) { root, _ in
+            var registry = try QuickLaunchRegistry.decode(root["quickLaunch"])
+            try registry.apply(mutation)
+            return [CmuxSettingChangePlanner.Edit(
+                path: JSONPath(dottedPath: "quickLaunch"),
+                value: try registry.jsonObject()
+            )]
+        }
+    }
+
+    /// Strict reads expose corrupt/future data instead of displaying an empty list.
+    public nonisolated func quickLaunchStates() -> AsyncStream<QuickLaunchState> {
+        AsyncStream { continuation in
+            let task = Task { [weak self] in
+                guard let self else { continuation.finish(); return }
+                let id = UUID()
+                let (signal, sink) = AsyncStream<Void>.makeStream(bufferingPolicy: .bufferingNewest(1))
+                await self.addSubscriber(id: id, continuation: sink)
+                var last = await self.quickLaunchState()
+                continuation.yield(last)
+                for await _ in signal {
+                    if Task.isCancelled { break }
+                    let state = await self.quickLaunchState()
+                    if state != last { last = state; continuation.yield(state) }
+                }
+                await self.removeSubscriber(id: id)
+                continuation.finish()
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
+    }
+
     /// Synchronously returns the current value for `key`, read directly from the
     /// config file without hopping onto the actor.
     ///

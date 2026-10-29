@@ -73,3 +73,7 @@ A는 ‘등록은 어떻게 할지’라는 요구의 해결책이 되지 못한
 - 포크 소유자가 결정을 재검토하고 기능 구현자가 UI/resolver를 비활성화한다. 저장된 entries는 삭제하지 않아 이후 복구 가능하게 한다.
 - UI rollback은 이미 열린 앱·웹을 종료하지 않는다. 설정 데이터의 되돌리기는 이 namespace만 대상으로 해야 하며 전체 사용자 설정을 복원본으로 덮어쓰지 않는다.
 - 재사용 기본값이 실제 작업 흐름과 맞지 않으면 정책을 조정한다. 이 변경은 서버 자동 실행이나 범용 shell 실행을 자동으로 허용하지 않는다.
+
+## 2026-10-29 구현 기록
+
+사용자의 병렬 구현 요청에 따라 `codex/quick-launch`에서 구현했다. [구현·검증 기록](../implementation/quick-launch-handoff.md)에 선택한 UI, 저장 schema, 재사용 우선순위, 로컬 workspace 범위 및 미완료 네이티브 검증을 기록했다. 위 초안의 `icon` 객체는 1차 구현에서 허용된 SF Symbol 이름의 `symbol` 필드로 구체화했다. 앱 대상은 URL과 bundleIdentifier 및 선택적 bookmark를 저장한다.

@@ -3015,6 +3015,7 @@
 		C986A0050000000000000001 /* ProvisionalDragWriterOwnership.swift in Sources */ = {isa = PBXBuildFile; fileRef = C986A0060000000000000001 /* ProvisionalDragWriterOwnership.swift */; };
 		C986A00E0000000000000001 /* ProvisionalDragWriterOwnershipToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = C986A00D0000000000000001 /* ProvisionalDragWriterOwnershipToken.swift */; };
 		C0DEA771000000000000000F /* ProWelcomeChecklist.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DEA7710000000000000010 /* ProWelcomeChecklist.swift */; };
+		C6514628DF4D9B0BCE8ECC95 /* QuickLaunch.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF4B0E712A227AF4BA15F0EC /* QuickLaunch.swift */; };
 		C0DE86520000000000000115 /* QuickLookPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE86520000000000000116 /* QuickLookPreviewView.swift */; };
 		A64610010000000000000001 /* QuitConfirmationAlertPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A64610010000000000000002 /* QuitConfirmationAlertPresenter.swift */; };
 		A64610020000000000000001 /* QuitConfirmationAlertPresenterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A64610020000000000000002 /* QuitConfirmationAlertPresenterTests.swift */; };
@@ -7686,6 +7687,7 @@
 		C986A0060000000000000001 /* ProvisionalDragWriterOwnership.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProvisionalDragWriterOwnership.swift; sourceTree = "<group>"; };
 		C986A00D0000000000000001 /* ProvisionalDragWriterOwnershipToken.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProvisionalDragWriterOwnershipToken.swift; sourceTree = "<group>"; };
 		C0DEA7710000000000000010 /* ProWelcomeChecklist.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProWelcomeChecklist.swift; sourceTree = "<group>"; };
+		CF4B0E712A227AF4BA15F0EC /* QuickLaunch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickLaunch.swift; sourceTree = "<group>"; };
 		C0DE86520000000000000116 /* QuickLookPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Panels/QuickLookPreviewView.swift; sourceTree = "<group>"; };
 		A64610010000000000000002 /* QuitConfirmationAlertPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuitConfirmationAlertPresenter.swift; sourceTree = "<group>"; };
 		A64610020000000000000002 /* QuitConfirmationAlertPresenterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuitConfirmationAlertPresenterTests.swift; sourceTree = "<group>"; };
@@ -12646,6 +12648,7 @@
 				F1C6800D38EC5F238A2994FC /* DockSplitStore+ChiefPane.swift */,
 				7947118FF892144AE54C82D2 /* ChiefPaneDragPayload.swift */,
 				0D10F73113F55349CE0E475D /* ChiefHomeConversationRows.swift */,
+				CF4B0E712A227AF4BA15F0EC /* QuickLaunch.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -16703,6 +16706,7 @@
 				C986A0050000000000000001 /* ProvisionalDragWriterOwnership.swift in Sources */,
 				C986A00E0000000000000001 /* ProvisionalDragWriterOwnershipToken.swift in Sources */,
 				C0DEA771000000000000000F /* ProWelcomeChecklist.swift in Sources */,
+				C6514628DF4D9B0BCE8ECC95 /* QuickLaunch.swift in Sources */,
 				C0DE86520000000000000115 /* QuickLookPreviewView.swift in Sources */,
 					A64610010000000000000001 /* QuitConfirmationAlertPresenter.swift in Sources */,
 				A500RG01 /* ReactGrab.swift in Sources */,

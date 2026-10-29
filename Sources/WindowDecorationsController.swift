@@ -351,6 +351,10 @@ final class WindowDecorationsController {
                     to: locationInWindow
                 ) ?? anchorView
                 appDelegate.toggleNotificationsPopover(animated: true, anchorView: resolvedAnchorView)
+            case .quickLaunch:
+                if let anchorView = anchorView ?? window.contentView {
+                    QuickLaunchPresenter.shared.show(anchor: anchorView, at: anchorView.convert(locationInWindow, from: nil))
+                }
             case .newTab:
                 _ = appDelegate.performNewWorkspaceAction(
                     tabManager: context.tabManager,
