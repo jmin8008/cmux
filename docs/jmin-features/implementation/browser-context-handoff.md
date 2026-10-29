@@ -4,7 +4,7 @@
 - Base: `169da41b5d27ae811bb5dfa41a99980be97b9949`
 - Worktree: `/Users/jgy/workplace/tmp/cmux-worktrees/browser-context`
 - Design: [SDD](../architecture/prd1-browser-context-sdd.md), [ADR-0001](../decisions/0001-browser-context-handoff.md)
-- State: implementation committed; native app build and real WebKit/terminal smoke test pending Xcode installation.
+- State: implementation committed; tagged native build and focused real WebKit/PTY acceptance passed on 2026-10-29. Remaining native matrix edges are listed below.
 
 ## Implemented behavior
 
@@ -53,7 +53,7 @@ The localization helper also reports an existing interpolated `defaultValue` in 
 Blocked / not claimed:
 
 - Full `CmuxBrowser` package test compilation reaches pre-existing Bonsplit SwiftUI `@State` usage and fails because Command Line Tools lacks `SwiftUIMacros`. The failed build was stopped; no dependency source was altered.
-- Native application build, launch, real click/drag/zoom behavior, and live agent input preservation require Xcode and the parent-controlled build slot.
+- The tagged native app built and launched with Xcode 27.1 (build source `4b3e5eb828`, including the feature and V icon). Real click/text-drag/PTY acceptance passed as recorded below. Scroll/zoom, two-agent ambiguity and target-close/move races were not exercised natively.
 - No push, PR, merge, production install or stable-cmux replacement was performed.
 
 ## Native acceptance steps
@@ -70,3 +70,19 @@ Current boundaries: only registered local agent terminals and hook-backed relay 
 ## Review correction: embedded hit-testing
 
 The initial fixed overlays could miss a moving frame and could not cover an iframe in a modal top layer. The follow-up removes those overlays and sets `pointer-events: none !important` on each embedded element itself. A mutation observer blocks new embeds and reasserts the property after page inline-style changes; teardown restores the original value and priority. Capture guards ignore the visible bounds of disabled embeds so clicks do not accidentally select underlying page content. A real Chromium hit-test fixture reproduces both reported defects against the prior commit. Native WebKit smoke validation remains pending with the app build.
+
+## Native acceptance receipt — 2026-10-29
+
+The built `jmin-context` app (`4b3e5eb828`) ran on macOS 27.0.1 with an isolated local HTML fixture at `127.0.0.1:18765`. A disposable terminal ran a raw PTY byte recorder with bracketed paste enabled, and its live PID was registered through the actual `set_agent_pid` socket path. This verifies terminal delivery and selection; it does not claim a real coding provider interpreted the content.
+
+Observed:
+
+- The toolbar automatically selected the one registered terminal. Clicking the Save settings button inserted exactly one context with its text, `#save-button`, element type, URL and CSS viewport bounds. The page's original button action did not run.
+- A real pointer text drag inserted a second context with `selection: text`, `#context-text` and the exact selected sentence fragment.
+- The PTY recorder received bracketed paste boundaries around each context. No CR/Enter bytes or extra key sequences appeared outside the paste. Typing `existing draft ` first and capturing again preserved those bytes and appended the third paste without submitting.
+- Reloading the page disabled the picker. A pointer click inside an iframe while armed neither activated its button nor inserted context. Escape disabled the picker and the same pointer click then activated the frame button. Accessibility semantic press can directly activate an embedded button, so iframe acceptance specifically used pointer coordinates rather than the AX press shortcut.
+- The original Ghostty JSON error overlay was absent after the separate configuration repair.
+
+Evidence: `/tmp/cmux-context-native-acceptance-input.json` retains all three received contexts and raw byte boundaries; `/tmp/cmux-context-input-probe.py` is the disposable recorder. The recorder process and `codex.context-qa` PID registration were removed, and only the disposable QA workspace was closed. The development app remains usable.
+
+Not exercised natively in this pass: two-agent target ambiguity, target closure/movement during an in-flight capture, scroll/zoom coordinates, image/size rejection, and Design Mode/React Grab mutual exclusion. Existing focused model/runtime tests cover their stated subsets; no full native acceptance matrix is claimed.
