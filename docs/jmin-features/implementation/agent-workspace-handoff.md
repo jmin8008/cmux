@@ -71,3 +71,37 @@ feature commit을 되돌리면 기존 terminal→browser split 진입으로 돌�
 ## Provider 근거
 
 Claude의 in-process/Teams config 형태는 [공식 Agent Teams 문서](https://code.claude.com/docs/en/agent-teams)의 display mode·architecture 절과 기존 cmux CLI의 실제 launcher를 기준으로 연결했다. `--teammate-mode`는 실험적 플래그로 `claude --help`에는 표시되지 않는다. provider schema가 바뀌면 멤버를 추정하지 않고 capability를 비활성화한다.
+
+## 실제 앱 호스트 검증 결과 (2026-10-29, 실측)
+
+### 첫 성공 빌드
+- `afeca10f75`로 태그 앱(`jmin-agents`) 빌드 **성공**(`CMUX_RELOAD_APP_EMIT_MODULE=1 ./scripts/dev-jmin-agents.sh --launch --no-global-cli-links`, 562초, `BUILD SUCCEEDED`, 컴파일 오류 0). `ping` = PONG. 이전 `TerminalPanelView.swift:102` 오류는 재발하지 않았다. 이후 테스트 전용 커밋(`7d9dbbf149`, `3621fe575a`, `678d05fdd8`)을 반영해 다시 빌드·실행했다.
+
+### 앱 호스트 테스트 (runner `agents`, 실제 xcresult 기준)
+| suite | 실행 | 통과 | 실패 |
+|---|---|---|---|
+| AgentWorkspacePresentationTests | 4 | 4 | 0 |
+| AgentWorkspaceRendererLeaseTests | 11 (매개변수 사례 포함 시 14) | 11 | 0 (`7d9dbbf149` 이후) |
+| AgentWorkspaceInputBindingTests | 1 (매개변수 `ended:` 2사례) | 1 | 0 |
+| CmuxAgentChatConfigTests | 30 | 30 | 0 |
+- 첫 실행에서 `switchingMembersPreservesSessionsAndRevokesOldHostEligibility`가 `debugPortalVisibleInUI == false`로 실패(11개 중 1개). 원인: 앱 호스트에서 `Workspace()` 단독은 등록된 TabManager가 없어 `portalRenderingEnabled`가 거짓. 테스트가 `TerminalPortalTestWorkspace`를 쓰도록 수정(`7d9dbbf149`), 같은 명령으로 red→green. 제품 코드 결함은 아니다.
+- 호스트는 서명 없는 빌드(`CODE_SIGNING_ALLOWED=NO`)다. 아래 runner 수정 참고.
+- 확인하지 못한 것: `MacSentryStartupPolicyTests/appHostUsesSchemeScopedUserConfigurationHome`(격리 확인 테스트)는 선택자에 넣었으나 xcresult 테스트 목록에 나타나지 않았다. 호스트 receipt 파일은 6개 생성됐다. 격리가 검증됐다고 주장하지 않는다.
+
+### runner 수정 (검사 우회 없음, 사본: `.git/jmin-feature-coordination/handoff-20261029/prd3-run/runner.py`)
+1. `ROOT`를 `/tmp/...` 표기로 유지(Xcode `TARGET_BUILD_DIR`이 비해석 경로라 `TEST_HOST`와 불일치 오류).
+2. Xcode 27.1에서 `cmux-unit` 그래프가 앱 서명 때문에 `Cycle inside cmux`(Dock Tile plugin CodeSign ↔ Nucleo FFI 스크립트 단계)를 낸다. 변경 없는 `test-unit.sh build-for-testing`도 동일했고(스킴 `cmux` build는 아님), `PRODUCT_NAME` 재정의와 무관했다. `CODE_SIGNING_ALLOWED=NO`로 해결하고 서명 재정의는 제거. `PRODUCT_NAME` 재정의도 제거(기본 `cmux DEV`).
+3. `cmuxCLITestSupport` 소스가 `BundledCLITestSupport`(`BundledCLILinkageTests.swift`)를 요구해 공통 소스에 추가.
+4. 복제된 DerivedData의 `ModuleCache.noindex`는 원본 경로에 묶여 오류가 되므로 복제본에서만 삭제.
+5. suite 하나가 실패해도 나머지를 실행하고 마지막에 실패 suite를 보고(원 실패는 xcresult에 보존).
+
+### CLI 통합 테스트
+`runner.py cli --profile agents --cli <jmin-agents CLI>` 결과 PASS. 처음에는 실패했고 원인은 테스트였다: (a) 앱이 만드는 per-surface claude shim root가 없어 실제 Teams 실행이 거부됨, (b) 관리 wrapper를 실제 provider로 넘겨야 함, (c) Codex watcher 플래그는 `--max-auto-depth`. `3621fe575a`에서 수정(red→green).
+
+### 웹·정적
+- agent-chat `bun run test`: 137 tests + 46 scripts 통과, `tsc --noEmit` 통과. 처음에 `agent-workspace-http.test.ts`가 실패: 이 머신의 `claude`가 cmux wrapper라 sidecar가 `hooks claude inject-settings`를 호출하고 over-broad assertion이 거부. rpc 요청만 검사하도록 수정(`678d05fdd8`).
+- `scripts/verify-local.py --swift-changed`: 16/17 실행(swift-syntax는 선택된 Swift 파일 없음으로 SKIPPED), 실패 0. `Packages/macOS/CMUXAgentLaunch` `swift test --build-system native`: 871 tests 통과(전체 패키지).
+
+### 네이티브 그룹 UI 검증 — 미실행(차단)
+cmux-cua 서버가 "Computer Use onboarding is still in progress"로 시작하지 못했다. "Open terminal as chat"은 명령 팔레트 전용이며 socket RPC가 없어 CLI로 대체할 수 없다. 따라서 부모 입력, 팀원 선택, trace-only, 원본 PID/PTY 보존, 종료 후 입력 차단, 같은 PTY 재바인딩은 **화면에서 확인하지 못했다.** (앱 호스트 테스트가 PTY/입력 fence 로직은 다룬다.)
+수행한 것: fixture로 root/B/C 세션을 한 QA workspace에 실제 등록(서로 다른 PID 42574/43012/43119, surface, session), `/qa end`로 종료, QA workspace 닫음, `cmux.json`은 백업과 바이트 동일하게 복원(sha 동일). 실행 중인 `jmin-agents` 앱은 QA sidecar 설정으로 시작된 상태이므로 설정 복원을 반영하려면 앱을 한 번 재시작해야 한다. fixture는 `/tmp/cmux-jmin-agents-native-qa-xr3u18w2`에 남겨 두었다.
