@@ -42,14 +42,16 @@ cleanup_incomplete_xcodebuild_outputs
 [[ ! -e "$TAG_APP_STAGING_PATH" ]] || fail "--build-only kept a stale staging app"
 echo "PASS: --build-only keeps the tagged app bundle and still clears its own outputs"
 
-# A normal reload is unchanged: it replaces the tagged bundle, so stale ones still go.
+# Normal reload also preserves the published tag until its controlled stop/publish
+# phase. Cleanup runs before compilation and on failure, while the old app is live.
 seed reload
 BUILD_ONLY=0
 cleanup_incomplete_xcodebuild_outputs
-[[ ! -e "$XCODEBUILD_TAG_APP_PATH" ]] || fail "a normal reload no longer clears the stale tagged app"
+[[ -f "$XCODEBUILD_TAG_APP_PATH/Contents/MacOS/cmux DEV" ]] \
+  || fail "normal reload cleanup removed the running tagged app before termination"
 [[ ! -e "$XCODEBUILD_SOURCE_APP_PATH" && ! -e "$TAG_APP_STAGING_PATH" ]] \
   || fail "a normal reload no longer clears stale xcodebuild outputs"
-echo "PASS: a normal reload still clears the stale tagged app"
+echo "PASS: normal reload cleanup preserves the published tag and clears its own outputs"
 # A build-only base-name override aliases the xcodebuild source bundle to the
 # running tagged bundle, so it must be rejected before any build or cleanup.
 set +e
