@@ -86,7 +86,8 @@ public struct SocketControlPasswordStore: Sendable {
         if let filePassword = (try? loadPassword()) ?? nil {
             return filePassword
         }
-        guard allowLazyKeychainFallback else {
+        guard allowLazyKeychainFallback,
+              !CmuxConfigLocation(environment: environment).isDevelopment else {
             return nil
         }
         // The legacy keychain is the lowest-priority source and is only consulted
@@ -140,6 +141,7 @@ public struct SocketControlPasswordStore: Sendable {
     /// Migrates a legacy keychain password into the password file once, then deletes the keychain entry.
     /// - Parameter defaults: The defaults used to record that migration has run.
     public func migrateLegacyKeychainPasswordIfNeeded(defaults: UserDefaults = .standard) {
+        guard !CmuxConfigLocation(environment: environment).isDevelopment else { return }
         guard defaults.integer(forKey: Self.keychainMigrationDefaultsKey) < Self.keychainMigrationVersion else {
             return
         }
@@ -225,7 +227,8 @@ public struct SocketControlPasswordStore: Sendable {
     /// The default password file URL within the cmux state directory.
     ///
     /// Resolves to `<directory>/socket-control-password`, where `directory`
-    /// defaults to ``CmuxStateDirectory`` (`~/.local/state/cmux`). The file lives
+    /// defaults to ``CmuxStateDirectory`` (`~/.local/state/cmux`) for stable builds
+    /// and the isolated ``CmuxConfigLocation/directory`` for development builds. The file lives
     /// outside Application Support so the separately-signed `cmux` CLI can read it
     /// on the agent hook path without triggering the macOS Sequoia "access data
     /// from other apps" prompt (https://github.com/manaflow-ai/cmux/issues/5146).
@@ -236,13 +239,17 @@ public struct SocketControlPasswordStore: Sendable {
     ///   - directory: An explicit directory to hold the file; when `nil`, the
     ///     ``CmuxStateDirectory`` location is resolved via `fileManager`.
     ///   - fileManager: The file manager used to resolve the user's home.
+    ///   - configLocation: An explicit identity and settings location for testing.
     /// - Returns: The password file URL.
     public static func defaultPasswordFileURL(
         directory: URL? = nil,
-        fileManager: FileManager
+        fileManager: FileManager,
+        configLocation: CmuxConfigLocation? = nil
     ) -> URL? {
+        let location = configLocation ?? CmuxConfigLocation(home: fileManager.homeDirectoryForCurrentUser)
         let controlDirectory = directory
-            ?? CmuxStateDirectory.url(homeDirectory: fileManager.homeDirectoryForCurrentUser)
+            ?? (location.isDevelopment ? location.directory
+                : CmuxStateDirectory.url(homeDirectory: fileManager.homeDirectoryForCurrentUser))
         return controlDirectory.appendingPathComponent(fileName, isDirectory: false)
     }
 
@@ -307,6 +314,7 @@ public struct SocketControlPasswordStore: Sendable {
     public static func migrateLegacyApplicationSupportPasswordFileIfNeeded(
         fileManager: FileManager
     ) {
+        guard !CmuxConfigLocation(home: fileManager.homeDirectoryForCurrentUser).isDevelopment else { return }
         guard let destination = defaultPasswordFileURL(fileManager: fileManager),
               let legacyDirectory = CmuxStateDirectory.legacyApplicationSupportURL(fileManager: fileManager) else {
             return
@@ -319,7 +327,10 @@ public struct SocketControlPasswordStore: Sendable {
     }
 
     private func resolvedFileURL() -> URL? {
-        fileURLOverride ?? Self.defaultPasswordFileURL(fileManager: fileManager)
+        fileURLOverride ?? Self.defaultPasswordFileURL(
+            fileManager: fileManager,
+            configLocation: CmuxConfigLocation(home: fileManager.homeDirectoryForCurrentUser, environment: environment)
+        )
     }
 
     private static func normalized(_ value: String?) -> String? {

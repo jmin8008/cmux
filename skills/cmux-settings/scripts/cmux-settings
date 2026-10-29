@@ -53,7 +53,18 @@ from typing import Any
 
 from cmux_jsonc_edit import JSONCEditError, remove_jsonc_path, set_jsonc_path
 
-DEFAULT_PATH = Path.home() / ".config" / "cmux" / "cmux.json"
+def default_settings_path() -> Path:
+    """Match the app/CLI development identity without falling back to stable settings."""
+    identity = os.environ.get("CMUX_BUNDLE_ID", "")
+    debug_identity = "com.cmuxterm.app.debug"
+    if identity == debug_identity or identity.startswith(debug_identity + "."):
+        suffix = identity[len(debug_identity):].strip(".")
+        tag = re.sub(r"[^a-zA-Z0-9_.-]", "-", suffix) or "untagged"
+        return Path.home() / ".config" / "cmux-dev" / tag / "cmux.json"
+    return Path.home() / ".config" / "cmux" / "cmux.json"
+
+
+DEFAULT_PATH = default_settings_path()
 SCHEMA_URL = (
     "https://raw.githubusercontent.com/manaflow-ai/cmux/main/web/data/cmux.schema.json"
 )
@@ -491,7 +502,7 @@ def semantic_scope_for(path: Path, explicit_scope: str | None = None) -> str:
     resolved = path.expanduser().resolve()
     global_paths = {
         DEFAULT_PATH.expanduser().resolve(),
-        (Path.home() / ".config" / "cmux" / "settings.json").resolve(),
+        DEFAULT_PATH.with_name("settings.json").expanduser().resolve(),
         (Path.home() / "Library" / "Application Support" / "com.cmuxterm.app" / "settings.json").resolve(),
     }
     if resolved in global_paths:

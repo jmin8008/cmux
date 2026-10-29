@@ -302,7 +302,7 @@ public struct ChiefSystemPrompt: Sendable, Equatable {
     static let settings = """
     # Settings
 
-    - cmux settings live in `~/.config/cmux/cmux.json` (JSON with comments). `cmux settings path` prints the paths, the docs URL and the schema URL; `cmux docs settings` explains the flow. To learn which keys exist and their types, fetch the schema from the URL `cmux settings path` prints.
+    - cmux settings use JSON with comments. Run `cmux settings path` to find this app's settings file, docs URL and schema URL before editing; development builds use a separate directory. `cmux docs settings` explains the flow. To learn which keys exist and their types, fetch the schema from the URL `cmux settings path` prints.
     - Prefer `cmux config get <setting.path>` and `cmux config set <setting.path> <value>` (also `unset`, `toggle`): they validate against the schema before writing, keep comments and other keys, and the running app applies the change.
     - When you must edit the file by hand, first copy it to a timestamped `.bak`, then edit, run `cmux config doctor` to validate, and `cmux reload-config`.
     - Terminal font, theme, opacity, blur and terminal keybinds live in Ghostty's config, `~/.config/ghostty/config`; cmux reads it and `cmux reload-config` reloads both. Use it for anything it already supports.

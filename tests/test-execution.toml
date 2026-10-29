@@ -11,6 +11,10 @@
 version = 1
 
 [[test]]
+path = "tests/test_dev_config_isolation.py"
+lane = "macos-cli-no-socket"
+
+[[test]]
 path = "tests/test_cli_new_window_name.py"
 lane = "macos-cli-no-socket"
 requirements = ["cmux-cli"]

@@ -201,7 +201,7 @@ extension CMUXCLI {
         Config files:
           \(Self.primarySettingsDisplayPath)
           legacy config: \(Self.legacySettingsDisplayPath)
-          legacy app support: \(Self.fallbackSettingsDisplayPath)
+          legacy app support: \(Self.fallbackSettingsDisplayPath ?? "—")
 
         Related (not cmux-owned, but cmux reads it for terminal behavior):
           \(Self.ghosttyConfigDisplayPath)
@@ -226,7 +226,7 @@ extension CMUXCLI {
         let payload: [String: Any] = [
             "primary": Self.primarySettingsDisplayPath,
             "legacy": Self.legacySettingsDisplayPath,
-            "fallback": Self.fallbackSettingsDisplayPath,
+            "fallback": Self.fallbackSettingsDisplayPath as Any? ?? NSNull(),
             "ghostty_config": [
                 "path": Self.ghosttyConfigDisplayPath,
                 "note": "Not cmux-owned, but cmux reads it. Use for terminal transparency (background-opacity), blur, font, theme, etc.",
@@ -246,7 +246,7 @@ extension CMUXCLI {
         print("Config files:")
         print("  primary:  \(Self.primarySettingsDisplayPath)")
         print("  legacy config: \(Self.legacySettingsDisplayPath)")
-        print("  legacy app support: \(Self.fallbackSettingsDisplayPath)")
+        print("  legacy app support: \(Self.fallbackSettingsDisplayPath ?? "—")")
         print()
         print("Related (not cmux-owned, but cmux reads it for terminal behavior):")
         print("  \(Self.ghosttyConfigDisplayPath)")

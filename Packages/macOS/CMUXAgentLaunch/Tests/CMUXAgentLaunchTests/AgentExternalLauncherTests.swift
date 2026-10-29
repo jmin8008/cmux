@@ -648,6 +648,24 @@ import Testing
         #expect(command.contains("teamclaude run -- --resume \(sessionID)"))
     }
 
+    @Test func developmentConfigOverridesTheStableUserPath() throws {
+        let home = FileManager.default.temporaryDirectory.appendingPathComponent("cmux-launcher-dev-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: home) }
+        let stable = home.appendingPathComponent(".config/cmux/cmux.json")
+        let dev = home.appendingPathComponent(".config/cmux-dev/jmin/cmux.json")
+        for file in [stable, dev] {
+            try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try Data("{}".utf8).write(to: file)
+        }
+        #expect(AgentExternalLauncherRegistry.configPaths(
+            homeDirectory: home.path, workingDirectory: nil, userConfigPath: dev.path
+        ) == [dev.path])
+        try FileManager.default.removeItem(at: dev)
+        #expect(AgentExternalLauncherRegistry.configPaths(
+            homeDirectory: home.path, workingDirectory: nil, userConfigPath: dev.path
+        ).isEmpty)
+    }
+
     @Test func loadMergesUserAndProjectConfigsWithProjectWinning() throws {
         let root = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent("cmux-external-launcher-\(UUID().uuidString)", isDirectory: true)

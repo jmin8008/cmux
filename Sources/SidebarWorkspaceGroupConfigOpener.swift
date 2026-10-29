@@ -1,4 +1,5 @@
 import AppKit
+import CmuxSettings
 import CmuxWorkspaces
 import Foundation
 
@@ -32,10 +33,7 @@ enum SidebarWorkspaceGroupConfigOpener {
     static func materializedCmuxConfigURL(
         home: URL = FileManager.default.homeDirectoryForCurrentUser
     ) -> URL {
-        let configURL = home
-            .appendingPathComponent(".config", isDirectory: true)
-            .appendingPathComponent("cmux", isDirectory: true)
-            .appendingPathComponent("cmux.json", isDirectory: false)
+        let configURL = CmuxConfigLocation(home: home).userConfigFile
         if !FileManager.default.fileExists(atPath: configURL.path) {
             try? FileManager.default.createDirectory(
                 at: configURL.deletingLastPathComponent(),

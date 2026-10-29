@@ -16,8 +16,8 @@ public import CmuxFoundation
 /// injected collaborators (no globals), constructed at the composition root.
 public struct GhosttyConfigDiscovery {
     /// The release bundle identifier whose Application Support config directory
-    /// is always included in the scan paths, regardless of the running build's
-    /// own identifier.
+    /// can be included in the scan paths for release channels. Development
+    /// builds only scan their own cmux-managed configuration.
     public static let releaseBundleIdentifier = CmuxGhosttyConfigPathResolver.releaseBundleIdentifier
 
     let fileReader: any GhosttyConfigFileReading
@@ -631,6 +631,11 @@ public struct GhosttyConfigDiscovery {
             appSupportDirectory: appSupportDirectory
         )
         paths.append(contentsOf: appSupportConfigURLs.map(\.path))
+
+        // Development builds must not pick up the installed app's legacy config.
+        if bundleId == "com.cmuxterm.app.debug" || bundleId.hasPrefix("com.cmuxterm.app.debug.") {
+            return paths
+        }
 
         let releaseDir = appSupportDirectory.appendingPathComponent(Self.releaseBundleIdentifier, isDirectory: true)
         let releaseLegacyConfig = releaseDir.appendingPathComponent("config", isDirectory: false)

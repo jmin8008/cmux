@@ -82,17 +82,19 @@ public struct AgentExternalLauncherRegistry: Equatable, Sendable {
     /// - Parameters:
     ///   - homeDirectory: The user's home directory.
     ///   - workingDirectory: The directory a project config is searched upwards from.
+    ///   - userConfigPath: The app-selected user config, including development isolation.
     ///   - fileManager: Filesystem used to probe for the files.
     /// - Returns: Existing config paths, deduplicated.
     public static func configPaths(
         homeDirectory: String,
         workingDirectory: String?,
+        userConfigPath: String? = nil,
         fileManager: FileManager = .default
     ) -> [String] {
         var paths: [String] = []
         let home = (homeDirectory as NSString).standardizingPath
         paths.append(
-            ((home as NSString).appendingPathComponent(".config/cmux") as NSString)
+            userConfigPath ?? ((home as NSString).appendingPathComponent(".config/cmux") as NSString)
                 .appendingPathComponent("cmux.json")
         )
         if let workingDirectory = workingDirectory?.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -112,12 +114,14 @@ public struct AgentExternalLauncherRegistry: Equatable, Sendable {
     /// - Parameters:
     ///   - homeDirectory: The user's home directory.
     ///   - workingDirectory: The directory a project config is searched upwards from.
+    ///   - userConfigPath: The app-selected user config, including development isolation.
     ///   - fileManager: Filesystem used to read the files.
     ///   - sanitize: JSONC comment stripping applied before decoding.
     /// - Returns: The merged registry.
     public static func load(
         homeDirectory: String,
         workingDirectory: String?,
+        userConfigPath: String? = nil,
         fileManager: FileManager = .default,
         sanitize: (Data) throws -> Data
     ) -> AgentExternalLauncherRegistry {
@@ -125,6 +129,7 @@ public struct AgentExternalLauncherRegistry: Equatable, Sendable {
             configPaths: configPaths(
                 homeDirectory: homeDirectory,
                 workingDirectory: workingDirectory,
+                userConfigPath: userConfigPath,
                 fileManager: fileManager
             ),
             fileManager: fileManager,

@@ -10,32 +10,20 @@ final class CmuxSettingsFileStore {
     static let currentSchemaVersion = 1
     static let schemaURLString = "https://raw.githubusercontent.com/manaflow-ai/cmux/main/web/data/cmux.schema.json"
     private static let legacySchemaURLString = "https://raw.githubusercontent.com/manaflow-ai/cmux/main/web/data/cmux-settings.schema.json"
-    private static let releaseBundleIdentifier = "com.cmuxterm.app"
     private static let backupsDefaultsKey = "cmux.settingsFile.backups.v1"
     private static let importedManagedDefaultsDefaultsKey = "cmux.settingsFile.importedManagedDefaults.v1"
     fileprivate static let socketPasswordBackupIdentifier = "automation.socketPassword"
 
     static var defaultPrimaryPath: String {
-        let home = FileManager.default.homeDirectoryForCurrentUser.path
-        return (home as NSString).appendingPathComponent(".config/cmux/cmux.json")
+        CmuxConfigLocation().userConfigFile.path
     }
 
     static var defaultFallbackPath: String? {
-        let home = FileManager.default.homeDirectoryForCurrentUser.path
-        return (home as NSString).appendingPathComponent(".config/cmux/settings.json")
+        CmuxConfigLocation().legacyFallbackFile.path
     }
 
     static var defaultApplicationSupportFallbackPath: String? {
-        guard let appSupport = FileManager.default.urls(
-            for: .applicationSupportDirectory,
-            in: .userDomainMask
-        ).first else {
-            return nil
-        }
-        return appSupport
-            .appendingPathComponent(releaseBundleIdentifier, isDirectory: true)
-            .appendingPathComponent("settings.json", isDirectory: false)
-            .path
+        CmuxConfigLocation().legacyApplicationSupportFile?.path
     }
 
     private let primaryPath: String

@@ -1,4 +1,5 @@
 import CMUXAgentLaunch
+import CmuxSettings
 import Foundation
 import OSLog
 
@@ -525,7 +526,9 @@ struct CmuxVaultAgentRegistry: Sendable {
         fileManager: FileManager
     ) -> [String] {
         let home = (homeDirectory as NSString).standardizingPath
-        var paths = [(home as NSString).appendingPathComponent(".config/cmux/cmux.json")]
+        var paths = [CmuxConfigLocation(
+            home: URL(fileURLWithPath: home), environment: environment
+        ).userConfigFile.path]
         let startingDirectory = workingDirectory?.trimmingCharacters(in: .whitespacesAndNewlines)
             ?? environment["PWD"]?.trimmingCharacters(in: .whitespacesAndNewlines)
         if let startingDirectory, !startingDirectory.isEmpty,

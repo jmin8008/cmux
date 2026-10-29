@@ -1,4 +1,5 @@
 import Foundation
+import CmuxSettings
 import SwiftUI
 
 extension DockSplitStore {
@@ -238,8 +239,7 @@ extension DockSplitStore {
            !testPath.isEmpty {
             return URL(fileURLWithPath: testPath)
         }
-        return FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".config/cmux/dock.json", isDirectory: false)
+        return CmuxConfigLocation().directory.appendingPathComponent("dock.json", isDirectory: false)
     }
 
     nonisolated private static func existingDirectory(_ rawPath: String) -> String? {

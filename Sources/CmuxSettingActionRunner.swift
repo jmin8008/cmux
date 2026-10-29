@@ -155,6 +155,9 @@ enum CmuxSettingActionRunner {
                 localized: "settingAction.failed.unreadable",
                 defaultValue: "cmux couldn't read or save ~/.config/cmux/cmux.json. Check it for a syntax error, then try again."
             )
+        alert.informativeText = alert.informativeText.replacingOccurrences(
+            of: "~/.config/cmux/cmux.json", with: CmuxConfigLocation().userConfigDisplayPath
+        )
         if let window = window ?? NSApp.keyWindow {
             alert.beginSheetModal(for: window)
         } else {

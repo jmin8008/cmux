@@ -9,9 +9,9 @@ import CmuxFoundation
 #endif
 
 final class GhosttyConfigPathResolverTests: XCTestCase {
-    func testCmuxAppSupportConfigURLsUseReleaseConfigForDebugBundleWithoutCurrentConfig() throws {
+    func testCmuxAppSupportConfigURLsDoNotUseReleaseConfigForDebugBundle() throws {
         try withTemporaryAppSupportDirectory { appSupportDirectory in
-            let releaseConfigURL = try writeAppSupportConfig(
+            _ = try writeAppSupportConfig(
                 appSupportDirectory: appSupportDirectory,
                 bundleIdentifier: "com.cmuxterm.app",
                 filename: "config",
@@ -23,7 +23,7 @@ final class GhosttyConfigPathResolverTests: XCTestCase {
                     currentBundleIdentifier: "com.cmuxterm.app.debug",
                     appSupportDirectory: appSupportDirectory
                 ),
-                [releaseConfigURL]
+                []
             )
         }
     }
@@ -45,7 +45,7 @@ final class GhosttyConfigPathResolverTests: XCTestCase {
 
             XCTAssertEqual(
                 GhosttyApp.cmuxAppSupportConfigURLs(
-                    currentBundleIdentifier: "com.cmuxterm.app.debug.issue-3478",
+                    currentBundleIdentifier: "com.cmuxterm.app.nightly",
                     appSupportDirectory: appSupportDirectory
                 ),
                 [preferredConfigURL]
@@ -331,7 +331,7 @@ final class GhosttyConfigPathResolverTests: XCTestCase {
                 appSupportDirectory: appSupportDirectory
             )
 
-            XCTAssertTrue(paths.contains(preferredConfigURL.path))
+            XCTAssertFalse(paths.contains(preferredConfigURL.path))
             XCTAssertFalse(paths.contains(legacyConfigURL.path))
         }
     }

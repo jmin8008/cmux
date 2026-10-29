@@ -1,11 +1,16 @@
 import Foundation
+import CmuxSettings
 
 extension CMUXCLI {
     static let settingsDocsURL = "https://cmux.com/docs/configuration#cmux-json"
     static let settingsSchemaURL = "https://raw.githubusercontent.com/manaflow-ai/cmux/main/web/data/cmux.schema.json"
-    static let primarySettingsDisplayPath = "~/.config/cmux/cmux.json"
-    static let legacySettingsDisplayPath = "~/.config/cmux/settings.json"
-    static let fallbackSettingsDisplayPath = "~/Library/Application Support/com.cmuxterm.app/settings.json"
+    static var primarySettingsDisplayPath: String { CmuxConfigLocation().userConfigDisplayPath }
+    static var legacySettingsDisplayPath: String { CmuxConfigLocation().legacyFallbackDisplayPath }
+    static var fallbackSettingsDisplayPath: String? {
+        CmuxConfigLocation().legacyApplicationSupportFile.map { _ in
+            "~/Library/Application Support/com.cmuxterm.app/settings.json"
+        }
+    }
     static let ghosttyConfigDisplayPath = "~/.config/ghostty/config"
 
     private struct DocsResource {
@@ -605,7 +610,7 @@ extension CMUXCLI {
             payload["settings_files"] = [
                 "primary": Self.primarySettingsDisplayPath,
                 "legacy": Self.legacySettingsDisplayPath,
-                "fallback": Self.fallbackSettingsDisplayPath,
+                "fallback": Self.fallbackSettingsDisplayPath as Any? ?? NSNull(),
             ]
             payload["ghostty_config"] = [
                 "path": Self.ghosttyConfigDisplayPath,
@@ -661,7 +666,7 @@ extension CMUXCLI {
             print("Config files:")
             print("  primary: \(Self.primarySettingsDisplayPath)")
             print("  legacy config: \(Self.legacySettingsDisplayPath)")
-            print("  legacy app support: \(Self.fallbackSettingsDisplayPath)")
+            print("  legacy app support: \(Self.fallbackSettingsDisplayPath ?? "—")")
             print()
             print("Related (not cmux-owned, but cmux reads it for terminal behavior):")
             print("  \(Self.ghosttyConfigDisplayPath)")
@@ -819,7 +824,7 @@ extension CMUXCLI {
         Config file:
           \(Self.primarySettingsDisplayPath)
           legacy config: \(Self.legacySettingsDisplayPath)
-          legacy app support: \(Self.fallbackSettingsDisplayPath)
+          legacy app support: \(Self.fallbackSettingsDisplayPath ?? "—")
 
         Related (not cmux-owned, but cmux reads it for terminal behavior):
           \(Self.ghosttyConfigDisplayPath)

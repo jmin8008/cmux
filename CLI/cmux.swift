@@ -24023,8 +24023,7 @@ struct CMUXCLI {
                 throw CLIError(message: String(localized: "cli.sidebar.try.usage", defaultValue: "Usage: cmux sidebar try <template>"))
             }
             let previewName = "sidebar-preview-\(UUID().uuidString.prefix(8).lowercased())"
-            let directory = FileManager.default.homeDirectoryForCurrentUser
-                .appendingPathComponent(".config/cmux/sidebars", isDirectory: true)
+            let directory = CmuxConfigLocation().directory.appendingPathComponent("sidebars", isDirectory: true)
             do {
                 let path = try CustomSidebarTemplateInstaller().install(
                     name: previewName,
@@ -24069,8 +24068,7 @@ struct CMUXCLI {
             guard let templateID else {
                 throw CLIError(message: String(localized: "cli.sidebar.new.missingTemplate", defaultValue: "sidebar new requires --from <template>"))
             }
-            let directory = FileManager.default.homeDirectoryForCurrentUser
-                .appendingPathComponent(".config/cmux/sidebars", isDirectory: true)
+            let directory = CmuxConfigLocation().directory.appendingPathComponent("sidebars", isDirectory: true)
             do {
                 let path = try CustomSidebarTemplateInstaller().install(
                     name: name,
@@ -35422,6 +35420,7 @@ struct CMUXCLI {
         let registry = AgentExternalLauncherRegistry.load(
             homeDirectory: NSHomeDirectory(),
             workingDirectory: workingDirectory,
+            userConfigPath: CmuxConfigLocation().userConfigFile.path,
             sanitize: { try JSONCParser.preprocess(data: $0) }
         )
         Self.externalAgentLauncherCacheLock.lock()
