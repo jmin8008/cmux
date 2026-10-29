@@ -102,6 +102,25 @@ Claude의 in-process/Teams config 형태는 [공식 Agent Teams 문서](https://
 - agent-chat `bun run test`: 137 tests + 46 scripts 통과, `tsc --noEmit` 통과. 처음에 `agent-workspace-http.test.ts`가 실패: 이 머신의 `claude`가 cmux wrapper라 sidecar가 `hooks claude inject-settings`를 호출하고 over-broad assertion이 거부. rpc 요청만 검사하도록 수정(`678d05fdd8`).
 - `scripts/verify-local.py --swift-changed`: 16/17 실행(swift-syntax는 선택된 Swift 파일 없음으로 SKIPPED), 실패 0. `Packages/macOS/CMUXAgentLaunch` `swift test --build-system native`: 871 tests 통과(전체 패키지).
 
-### 네이티브 그룹 UI 검증 — 미실행(차단)
-cmux-cua 서버가 "Computer Use onboarding is still in progress"로 시작하지 못했다. "Open terminal as chat"은 명령 팔레트 전용이며 socket RPC가 없어 CLI로 대체할 수 없다. 따라서 부모 입력, 팀원 선택, trace-only, 원본 PID/PTY 보존, 종료 후 입력 차단, 같은 PTY 재바인딩은 **화면에서 확인하지 못했다.** (앱 호스트 테스트가 PTY/입력 fence 로직은 다룬다.)
-수행한 것: fixture로 root/B/C 세션을 한 QA workspace에 실제 등록(서로 다른 PID 42574/43012/43119, surface, session), `/qa end`로 종료, QA workspace 닫음, `cmux.json`은 백업과 바이트 동일하게 복원(sha 동일). 실행 중인 `jmin-agents` 앱은 QA sidecar 설정으로 시작된 상태이므로 설정 복원을 반영하려면 앱을 한 번 재시작해야 한다. fixture는 `/tmp/cmux-jmin-agents-native-qa-xr3u18w2`에 남겨 두었다.
+### 네이티브 그룹 UI 검증 (2026-10-29 22:3x, 실측; 앱 `25bd09aa7e` 계열 재빌드)
+실제 `jmin-agents` 앱과 cmux-cua(foreground 전달)로 fixture 세션(root/B/C, 서로 다른 PID·PTY·surface, 한 workspace)을 검증했다. 설정은 PLAN대로 QA sidecar 명령으로 덮어썼다가 백업과 바이트 동일하게 복원했다.
+
+**처음 실제 앱으로 열자 제품 결함 2개가 나왔다(웹/호스트 테스트로는 보이지 않았다).**
+1. `mobile.chat.sessions`가 control socket에 없어 `method_not_found` → 그룹 API가 `503 registry_unavailable`. 수정: 패키지 coordinator seam·실행 정책·capabilities·앱 witness에 추가(`c3c4e17ef0` 직전 커밋, 패키지 회귀 테스트 red→green, `CmuxControlSocket` 632 tests 통과).
+2. 실제 응답은 snake_case(`session_id`, `agent_kind`, `terminal_id`)이고 state가 `{state: ...}`인데 sidecar는 임의 camelCase를 기대해 `409 binding_missing`. 수정: `normalizeSessionBindings`와 HTTP 테스트 fixture를 실제 형태로 교체(red→green), 웹 137 tests + 46 scripts + `tsc` 통과.
+
+**관찰한 것(통과)**
+- "터미널을 채팅으로 열기" → 메인 에이전트 대화 + composer + 멤버 칩(traceonly, QA Member B, QA Member C). API도 root, trace-only child, B, C를 반환.
+- 팀원 B/C 선택 시 읽기 전용 대화가 나오고 메인 composer는 root 소유 유지("메인 대화에서 답하세요").
+- trace-only: `원본 터미널` 비활성(회색), 대화/도구 실행만 가능.
+- B의 `원본 터미널`을 그룹 안에 표시: 같은 PID 83240/PTY ttys019, 새 provider 생성 없음. 명시적 ID로 보낸 마커가 각각 root/b/c에만 도달(`verify-marker` PASS 3/3). 그룹에 보이는 B 렌더러에 GUI로 입력한 `GUI-B-MARK-7731`은 b에만, main composer로 입력한 `GUI-ROOT-COMPOSER-5512`는 root에만 도달. 전환 전후 PID/TTY(83028/83240/83336, ttys018/019/020) 동일.
+- 종료: 그룹에 보이는 B와 C에 `/qa end`(정확한 대상 지정) → 즉시 터미널이 내려가고 대화로 복귀, 칩이 `종료됨`, `원본 터미널` 비활성. 종료된 C 자리에 입력해도 B/C 셸 어디에도 마커 없음(read-screen 확인).
+- 같은 PTY 재바인딩: B 표면에서 `--replacement`(새 PID 90456, 같은 surface) → 이전 B는 `ended`·terminal false, 새 세션은 별도 `미지정` 칩. 이전 B를 선택해도 `원본 터미널` 비활성. root도 종료 후 같은 PTY에서 replacement 시작(PID 90859): composer의 미전송 초안을 전송했지만 replacement 입력 로그와 셸 화면에 도달하지 않았다.
+- composer에 입력만 하고 Enter를 누르지 않은 텍스트는 어떤 PTY에도 도달하지 않았다.
+
+**관찰했으나 결론을 내리지 않은 것(결정 필요)**
+- 터미널이 표시되지 않은 상태에서 상세 영역(입력창이 아닌 곳)을 클릭하고 입력한 `POST-END-C-LEAK-9921`이 **root의 숨은 PTY로 전달**됐다(1회 관찰, 종료된 C/B에는 전달 안 됨). 숨은 root 터미널이 first responder로 남는 것으로 보이며 의도 여부 확인이 필요하다.
+- root 종료 뒤 composer 전송 시 UI에 말풍선("Processed 1 event")이 남지만 실제 전달은 없었다. 오류 배너는 관찰하지 못했다.
+
+**실행하지 않은 것**: resize/zoom, Find·copy/paste, 다른 split/배경 탭 상태, workspace 전환, hibernation, 권한 프롬프트, 앱 종료/복원, 실제 Claude Teams/Codex 프로세스. fixture 질의 외의 Codex 경로는 CLI 통합 테스트만 있다.
+정리: 모든 fixture 프로세스 종료, QA workspace 2개 닫음(이전 실행의 복원본 포함), `cmux.json` 복원, QA sidecar 종료. 앱(`jmin-agents`, PID 82097)은 실행 중이며 `/tmp/cmux-jmin-agents-native-qa-xr3u18w2`에 증거 파일을 남겼다. 빌드 lock 해제.
