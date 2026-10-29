@@ -21,6 +21,7 @@ extension BrowserPanel {
         tearDownMediaPlaybackMessageHandler(for: oldWebView)
         tearDownPageRestoration(for: oldWebView)
         designModeController.webViewWillBeRemoved(oldWebView)
+        contextSelectionController.remove(from: oldWebView)
         webAuthnCoordinator.tearDown(from: oldWebView)
         oldWebView.configuration.userContentController.removeScriptMessageHandler(
             forName: BrowserSSLTrustBypassMessageHandler.name

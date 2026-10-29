@@ -444,6 +444,9 @@
 		D7032A030000000000000001 /* BrowserClientCertificateCredentialPickerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7032A030000000000000002 /* BrowserClientCertificateCredentialPickerTests.swift */; };
 		C1A90000000000000000001B /* BrowserCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A90000000000000000001A /* BrowserCommands.swift */; };
 		E12E88F82733EC42F32C36A3 /* BrowserConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 970226F3C99D0D937CD00539 /* BrowserConfigTests.swift */; };
+		6E591D1651563CC35789D431 /* BrowserContextSelectionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8BC725749F8E2A68A056D38 /* BrowserContextSelectionController.swift */; };
+		ED9E03B84937B42FB2BF418E /* BrowserContextSelectionMessageHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA113B521DBFD9FEF607AE2F /* BrowserContextSelectionMessageHandler.swift */; };
+		5EC9FA824A3C48B23F45C8F8 /* BrowserContextSelectionToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF7122333C93BCCA01320623 /* BrowserContextSelectionToolbar.swift */; };
 		C12791000000000000000001 /* BrowserDataImportCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C12791000000000000000002 /* BrowserDataImportCoordinator.swift */; };
 		D35C00000000000000000003 /* BrowserDesignModeArtifactStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D35D00000000000000000003 /* BrowserDesignModeArtifactStoreTests.swift */; };
 		D35C00000000000000000002 /* BrowserDesignModeComposerHostingViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D35D00000000000000000002 /* BrowserDesignModeComposerHostingViewTests.swift */; };
@@ -533,6 +536,7 @@
 		8054A0010000000000000001 /* BrowserPanel+AutomationRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8054A0020000000000000002 /* BrowserPanel+AutomationRecovery.swift */; };
 		805600000000000000000001 /* BrowserPanel+AutomationViewport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 805600000000000000000002 /* BrowserPanel+AutomationViewport.swift */; };
 		9A126160000000000000000C /* BrowserPanel+CloudConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A126160000000000000000B /* BrowserPanel+CloudConnection.swift */; };
+		E3ABC704117476FEA827561A /* BrowserPanel+ContextSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3797A03C365F653504DF305 /* BrowserPanel+ContextSelection.swift */; };
 		C3711E000000000000000001 /* BrowserPanel+DisplayURL.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3711E000000000000000002 /* BrowserPanel+DisplayURL.swift */; };
 		D35A0000000000000000001A /* BrowserPanel+ElementPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = D35B0000000000000000001A /* BrowserPanel+ElementPicker.swift */; };
 		F15069A000000000000000A1 /* BrowserPanel+FormStateTracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = F15069A000000000000000A2 /* BrowserPanel+FormStateTracking.swift */; };
@@ -5298,6 +5302,9 @@
 		D7032A030000000000000002 /* BrowserClientCertificateCredentialPickerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserClientCertificateCredentialPickerTests.swift; sourceTree = "<group>"; };
 		C1A90000000000000000001A /* BrowserCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserCommands.swift; sourceTree = "<group>"; };
 		970226F3C99D0D937CD00539 /* BrowserConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserConfigTests.swift; sourceTree = "<group>"; };
+		C8BC725749F8E2A68A056D38 /* BrowserContextSelectionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Panels/BrowserContextSelectionController.swift; sourceTree = "<group>"; };
+		FA113B521DBFD9FEF607AE2F /* BrowserContextSelectionMessageHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Panels/BrowserContextSelectionMessageHandler.swift; sourceTree = "<group>"; };
+		CF7122333C93BCCA01320623 /* BrowserContextSelectionToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Panels/BrowserContextSelectionToolbar.swift; sourceTree = "<group>"; };
 		C12791000000000000000002 /* BrowserDataImportCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Panels/BrowserDataImportCoordinator.swift; sourceTree = "<group>"; };
 		D35D00000000000000000003 /* BrowserDesignModeArtifactStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserDesignModeArtifactStoreTests.swift; sourceTree = "<group>"; };
 		D35D00000000000000000002 /* BrowserDesignModeComposerHostingViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserDesignModeComposerHostingViewTests.swift; sourceTree = "<group>"; };
@@ -5387,6 +5394,7 @@
 		8054A0020000000000000002 /* BrowserPanel+AutomationRecovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Panels/BrowserPanel+AutomationRecovery.swift"; sourceTree = "<group>"; };
 		805600000000000000000002 /* BrowserPanel+AutomationViewport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Panels/BrowserPanel+AutomationViewport.swift"; sourceTree = "<group>"; };
 		9A126160000000000000000B /* BrowserPanel+CloudConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Panels/BrowserPanel+CloudConnection.swift"; sourceTree = "<group>"; };
+		B3797A03C365F653504DF305 /* BrowserPanel+ContextSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Panels/BrowserPanel+ContextSelection.swift"; sourceTree = "<group>"; };
 		C3711E000000000000000002 /* BrowserPanel+DisplayURL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Panels/BrowserPanel+DisplayURL.swift"; sourceTree = "<group>"; };
 		D35B0000000000000000001A /* BrowserPanel+ElementPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Panels/BrowserPanel+ElementPicker.swift"; sourceTree = "<group>"; };
 		F15069A000000000000000A2 /* BrowserPanel+FormStateTracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Panels/BrowserPanel+FormStateTracking.swift"; sourceTree = "<group>"; };
@@ -12646,6 +12654,10 @@
 				F1C6800D38EC5F238A2994FC /* DockSplitStore+ChiefPane.swift */,
 				7947118FF892144AE54C82D2 /* ChiefPaneDragPayload.swift */,
 				0D10F73113F55349CE0E475D /* ChiefHomeConversationRows.swift */,
+				C8BC725749F8E2A68A056D38 /* BrowserContextSelectionController.swift */,
+				FA113B521DBFD9FEF607AE2F /* BrowserContextSelectionMessageHandler.swift */,
+				CF7122333C93BCCA01320623 /* BrowserContextSelectionToolbar.swift */,
+				B3797A03C365F653504DF305 /* BrowserPanel+ContextSelection.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -15430,6 +15442,9 @@
 				BCBC0A0E0000000000000C01 /* BrowserChromeMetrics.swift in Sources */,
 				D7032A020000000000000001 /* BrowserClientCertificateAuthenticationController.swift in Sources */,
 				D7032A050000000000000001 /* BrowserClientCertificateCredentialPicker.swift in Sources */,
+				6E591D1651563CC35789D431 /* BrowserContextSelectionController.swift in Sources */,
+				ED9E03B84937B42FB2BF418E /* BrowserContextSelectionMessageHandler.swift in Sources */,
+				5EC9FA824A3C48B23F45C8F8 /* BrowserContextSelectionToolbar.swift in Sources */,
 				C12791000000000000000001 /* BrowserDataImportCoordinator.swift in Sources */,
 				D35A0000000000000000001C /* BrowserDesignModeController+Capture.swift in Sources */,
 				D35A00000000000000000020 /* BrowserDesignModeController+Handoff.swift in Sources */,
@@ -15477,6 +15492,7 @@
 				8054A0010000000000000001 /* BrowserPanel+AutomationRecovery.swift in Sources */,
 				805600000000000000000001 /* BrowserPanel+AutomationViewport.swift in Sources */,
 				9A126160000000000000000C /* BrowserPanel+CloudConnection.swift in Sources */,
+				E3ABC704117476FEA827561A /* BrowserPanel+ContextSelection.swift in Sources */,
 				C3711E000000000000000001 /* BrowserPanel+DisplayURL.swift in Sources */,
 				D35A0000000000000000001A /* BrowserPanel+ElementPicker.swift in Sources */,
 				F15069A000000000000000A1 /* BrowserPanel+FormStateTracking.swift in Sources */,

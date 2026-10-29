@@ -1,0 +1,67 @@
+# PRD1 implementation handoff
+
+- Branch: `codex/browser-context`
+- Base: `169da41b5d27ae811bb5dfa41a99980be97b9949`
+- Worktree: `/Users/jgy/workplace/tmp/cmux-worktrees/browser-context`
+- Design: [SDD](../architecture/prd1-browser-context-sdd.md), [ADR-0001](../decisions/0001-browser-context-handoff.md)
+- State: implementation committed; native app build and real WebKit/terminal smoke test pending Xcode installation.
+
+## Implemented behavior
+
+The browser toolbar now has a context selection toggle. It automatically chooses the single detected agent or the uniquely most recently used agent terminal in the same workspace. Input recency comes from accepted terminal input; changing focus to a dev server does not select it. Multiple unused agents require a destination selection. The active destination title stays visible and can be changed.
+
+The isolated WebKit picker captures a clicked element or a text drag at mouse-up, once per gesture. Empty drags do not send. Image clicks include alt text only. Input/editable fields, child frames, embedded viewers, PDF and other non-HTML documents are excluded. Embedded documents, including dynamically inserted frames, are shielded from pointer input while armed. Escape and toggle-off remove listeners, styles, and shields. Design Mode, React Grab and context selection are mutually exclusive.
+
+A bracketed text block contains a localized heading followed by JSON-quoted data: sanitized URL or HTML file URL, text, element tag, CSS selector, viewport CSS pixel bounds, viewport dimensions, and scroll offsets. JSON field names are stable interchange identifiers. Credentials, query, fragment, terminal controls and bidi controls are removed. There is no screenshot, attachment, image artifact, or inferred source-code location. Oversized selections are rejected with an explicit 32 KB error rather than truncated.
+
+The app pins an actual terminal surface ID and document revision before arming. Navigation, browser workspace movement, replacement and close invalidate pending capture messages. A capture/target pair is claimed once before literal paste. The terminal remains in the original workspace and must still have current agent ownership evidence. There is no fallback to a focused or arbitrary terminal. The paste path uses `TerminalPanel.sendText`, never named-key or raw-input submission. No Enter is synthesized. A cold/unavailable terminal fails visibly; the latest context can be copied explicitly. Accepted input is not a claim that the agent understood it.
+
+## Files and integration
+
+- `Packages/macOS/CmuxBrowser/.../ContextSelection`: capture model, formatter, destination resolution, delivery gate, resource loader.
+- `Packages/macOS/CmuxBrowser/.../Resources/BrowserContextSelectionRuntime.js`: the isolated click/text picker.
+- `Sources/Panels/BrowserContextSelection*`: WebKit lifecycle, state and toolbar/popover.
+- `Sources/Panels/BrowserPanel+ContextSelection.swift`: workspace-owned candidate and exact-terminal paste composition.
+- `BrowserPanel`, `BrowserPanelView`, element-picker and teardown extensions: install/UI/lifecycle hooks.
+- `TerminalPanel.recordExplicitInput`: accepted-input timestamp used for agent destination ranking.
+- New app files are wired with `scripts/wire-app-sources.py`.
+- 12 new localized strings have English, German, French, Arabic, Spanish, Traditional/Simplified Chinese, Korean and Japanese translations.
+
+## Run with isolated identity
+
+```sh
+./scripts/dev-context.sh
+./scripts/cli-context.sh ping
+```
+
+`dev-context.sh` fixes `CMUX_DEV_BACKEND_MODE=local` and `--tag jmin-context`. The expected bundle/config suffix is `jmin.context`, with the config under `~/.config/cmux-dev/jmin.context/`. Generic `dev-jmin.sh` is unchanged.
+
+## Verification
+
+Passed:
+
+- `node --test tests/browser-context/runtime.test.cjs`: 6 actual runtime-listener behavior tests (click, text/empty drag, input/size rejection, image metadata/Escape, unsupported viewer/cancel, dynamic frame shielding).
+- `BrowserContextSelectionTests`: 5 Swift Testing tests for JSON quoting/control removal/URL sanitation, size/type rejection, local HTML text, agent ranking, stale/closed/duplicate delivery gates. The exact source and test files were symlinked into a temporary minimal SwiftPM harness to avoid unrelated SwiftUI dependencies.
+- A focused `swiftc -typecheck -swift-version 6` check of the controller, WebKit message handler and toolbar against the exact new model module, with small stubs only for the existing app clipboard/style/help seams. This found and fixed WebKit's callback-only content-world evaluation overload. This is not a full app compile.
+- `python3 scripts/verify-local.py --affected <base> --swift-changed <base>`: 17/17 checks.
+- `python3 scripts/localization_catalog.py check`: 11 catalogs, 9 locales, zero parity errors.
+- `git diff --check`, `bash -n scripts/dev-context.sh scripts/cli-context.sh`.
+
+The localization helper also reports an existing interpolated `defaultValue` in the large touched `BrowserPanel.swift`; manual diff review confirms this feature did not add or change that string. The authoritative defaultValue and catalog checks pass.
+
+Blocked / not claimed:
+
+- Full `CmuxBrowser` package test compilation reaches pre-existing Bonsplit SwiftUI `@State` usage and fails because Command Line Tools lacks `SwiftUIMacros`. The failed build was stopped; no dependency source was altered.
+- Native application build, launch, real click/drag/zoom behavior, and live agent input preservation require Xcode and the parent-controlled build slot.
+- No push, PR, merge, production install or stable-cmux replacement was performed.
+
+## Native acceptance steps
+
+1. Run one coding-agent terminal and one dev-server terminal in the same workspace. Type in the agent, focus the server, then enable context selection in an HTML/localhost browser. Confirm the agent remains the destination.
+2. Click a button and drag selected text. Confirm one bracketed block per gesture, original button/link actions suppressed, and existing input preserved. Confirm the agent does not submit until the user presses Enter.
+3. Make an empty drag, click an image, scroll/zoom and select again. Confirm no image artifacts; coordinates are CSS viewport values. Check regular selection/clicks after Escape and toggle-off.
+4. With two agents and no input recency, confirm target selection is required. Change target and confirm the visible title and exact terminal match.
+5. Navigate/reload or close/move the target before a capture is delivered. Confirm stale captures are dropped and no other terminal receives text. Check copy fallback after a known failed insertion.
+6. Toggle Design Mode and React Grab in both directions, and close/move the browser panel. Confirm no selection interception remains after teardown.
+
+Current boundaries: only registered local agent terminals and hook-backed relay agents are auto-detected; unregistered shells and non-HTML viewers require future support. Browser portal/real input behavior remains a native smoke-test item.
