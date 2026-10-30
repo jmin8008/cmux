@@ -1199,6 +1199,7 @@ struct BrowserPanelView: View {
                 .accessibilityLabel(String(localized: "browser.omnibar.accessibilityLabel", defaultValue: "Address and search bar"))
 
             HStack(spacing: browserToolbarAccessorySpacing) {
+                BrowserContextSelectionToolbar(controller: panel.contextSelectionController, hitSize: addressBarButtonSize)
                 if shouldShowToolbarImportHintChip {
                     browserImportHintToolbarChip
                 }

@@ -25,9 +25,12 @@ final class TerminalPanel: Panel, ObservableObject {
     /// The underlying terminal surface
     let surface: TerminalSurface
     private(set) var hasReceivedExplicitInput = false
+    /// Input recency for explicit context handoff; focusing a dev server does not change it.
+    private(set) var lastContextInputAt: Date?
 
     func recordExplicitInput() {
         hasReceivedExplicitInput = true
+        lastContextInputAt = Date()
     }
 
     func restoreExplicitInputState(_ state: Bool) {
@@ -179,7 +182,7 @@ final class TerminalPanel: Panel, ObservableObject {
         self.stableSurfaceIdentity = PanelStableSurfaceIdentity(id: persistedStableSurfaceId ?? UUID())
         self.title = surface.agentPanelTitle.flatMap { AutomaticTerminalTitle($0)?.value } ?? "Terminal"
         surface.onExplicitInput = { [weak self] in
-            self?.hasReceivedExplicitInput = true
+            self?.recordExplicitInput()
         }
         // Subscribe to surface's search state changes
         surface.$searchState

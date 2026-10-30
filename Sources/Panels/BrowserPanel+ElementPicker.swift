@@ -30,19 +30,25 @@ extension BrowserPanel {
 
     @discardableResult
     func setDesignModeEnabled(_ enabled: Bool, reason: String) async -> Bool {
+        if enabled { contextSelectionController.stop() }
         if enabled, !(await deactivateReactGrabForDesignMode(reason: reason)) {
             return false
         }
+        // Context selection may have been armed while React Grab was closing.
+        if enabled { contextSelectionController.stop() }
         return await designModeController.setEnabled(enabled, reason: reason)
     }
 
     @discardableResult
     func prepareForReactGrabActivation(reason: String) async -> Bool {
+        contextSelectionController.stop()
         guard designModeController.protectsFromDiscard else { return true }
         let disabled = await designModeController.setEnabled(
             false,
             reason: "\(reason).deactivateDesignMode"
         )
+        // Context selection may have been armed while Design Mode was closing.
+        contextSelectionController.stop()
         if !disabled {
             designModeController.presentError(
                 String(

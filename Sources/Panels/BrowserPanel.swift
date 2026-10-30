@@ -2122,6 +2122,7 @@ final class BrowserPanel: Panel, ObservableObject {
     private(set) var workspaceId: UUID {
         didSet {
             guard workspaceId != oldValue else { return }
+            contextSelectionController.stop()
             BrowserReplTabAttachments.shared.panelDidChangeWorkspace(id)
         }
     }
@@ -2563,6 +2564,12 @@ final class BrowserPanel: Panel, ObservableObject {
     /// Owns the toolbar-triggered Design Mode transition so a disappearing
     /// browser surface can cancel the in-flight operation.
     var designModeToolbarToggleTask: Task<Void, Never>?
+    lazy var contextSelectionController = BrowserContextSelectionController(
+        targets: { [weak self] in self?.contextSelectionTargets() ?? [] },
+        paste: { [weak self] text, target in self?.pasteSelectedContext(text, to: target) ?? false },
+        prepare: { [weak self] in await self?.prepareForContextSelection() ?? false },
+        activityChanged: { [weak self] in self?.reevaluateHiddenWebViewDiscardScheduling(reason: "context_selection") }
+    )
     lazy var designModeController = BrowserDesignModeController(
         surfaceID: id,
         script: BrowserDesignModeScript(),
@@ -3353,6 +3360,7 @@ final class BrowserPanel: Panel, ObservableObject {
         setupObservers(for: webView); setupSameDocumentNavigationMessageHandler(for: webView); setupDocumentReadyMessageHandler(for: webView)
         setupReactGrabMessageHandler(for: webView)
         designModeController.install(on: webView)
+        contextSelectionController.install(on: webView)
         setupSSLTrustBypassMessageHandler(for: webView)
         setupMediaPlaybackMessageHandler(for: webView); setupFormStateMessageHandler(for: webView)
         webAuthnCoordinator.install(on: webView)
@@ -3393,6 +3401,7 @@ final class BrowserPanel: Panel, ObservableObject {
         }
         navigationDelegate.didStartProvisionalNavigation = { [weak self] webView, navigation in
             guard let self, self.isCurrentWebView(webView, instanceID: boundWebViewInstanceID) else { return }
+            self.contextSelectionController.stop()
             (webView as? CmuxWebView)?.diffViewerNavigationDidStart(navigation)
             self.automationNavigationCoordinator.didStart(
                 instanceID: boundWebViewInstanceID,
@@ -3409,6 +3418,7 @@ final class BrowserPanel: Panel, ObservableObject {
             guard let self, self.isCurrentWebView(webView, instanceID: boundWebViewInstanceID) else { return }
             self.cancelPendingJavaScriptDialogs()
             self.designModeController.webViewWillNavigate()
+            self.contextSelectionController.stop()
             (webView as? CmuxWebView)?.diffViewerNavigationDidCommit(navigation)
             WindowBrowserSlotView.hosting(webView)?.clearLinkHoverURLs()
             self.isMainFrameProvisionalNavigationActive = false
@@ -4866,6 +4876,7 @@ final class BrowserPanel: Panel, ObservableObject {
                 guard let self, let webView, isCurrentObservedWebView(self, webView) else { return }
                 guard !self.isMainFrameProvisionalNavigationActive else { return }
                 self.designModeController.webViewURLDidChange(to: observedURL)
+                self.contextSelectionController.documentChanged(to: observedURL)
                 self.currentURL = self.cloudAccess.displayURL(observedURL) ?? Self.remoteProxyDisplayURL(for: observedURL) ?? observedURL
                 self.refreshBackgroundAppearance()
                 GlobalSearchCoordinator.shared.captureBrowserPanel(self)
@@ -6440,7 +6451,7 @@ extension BrowserPanel: BrowserHiddenWebViewDiscardManagerDelegate {
             isDeveloperToolsVisible: isDeveloperToolsVisible(),
             isElementFullscreenActive: isElementFullscreenActive,
             isReactGrabActive: isReactGrabActive,
-            isDesignModeActive: designModeController.protectsFromDiscard,
+            isDesignModeActive: designModeController.protectsFromDiscard || contextSelectionController.isActive || contextSelectionController.isTransitioning,
             // A REPL session driving this tab needs its live web view.
             isVisualAutomationCaptureActive: activeVisualAutomationCaptureCount > 0
                 || !mobileBrowserDialogBroker.pendingDialogs.isEmpty

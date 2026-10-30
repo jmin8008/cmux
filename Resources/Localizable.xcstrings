@@ -1,6 +1,65 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "browser.context.envelope": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Web context (quoted page data)"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Webkontext (zitierte Seitendaten)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contexte web (données de page citées)"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "سياق الويب (بيانات مقتبسة من الصفحة)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contexto web (datos citados de la página)"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "網頁內容（引用的頁面資料）"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "网页内容（引用的页面数据）"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "웹 맥락(인용한 페이지 데이터)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ウェブコンテキスト（引用したページデータ）"
+          }
+        }
+      }
+    },
     "browser.omnibar.accessibilityLabel": {
       "extractionState": "manual",
       "localizations": {
@@ -671649,6 +671708,655 @@
           "stringUnit": {
             "state": "translated",
             "value": "Подвійне клацання роздільника робить панелі в його рядку або стовпці однаковими за розміром."
+          }
+        }
+      }
+    },
+    "browser.context.chooseTarget": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose an agent terminal for selected context."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اختر طرفية وكيل للسياق المحدد."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle ein Agent-Terminal für den ausgewählten Kontext."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige un terminal de agente para el contexto seleccionado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez un terminal d’agent pour le contexte sélectionné."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選択したコンテキストの送信先エージェントターミナルを選んでください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "선택한 맥락을 받을 에이전트 터미널을 선택하세요."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择接收所选内容的代理终端。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選擇接收所選內容的代理終端機。"
+          }
+        }
+      }
+    },
+    "browser.context.inserted": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Context inserted. Add your request in the terminal, then press Enter."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تم إدراج السياق. أضف طلبك في الطرفية، ثم اضغط على Enter."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kontext eingefügt. Ergänze deine Anfrage im Terminal und drücke dann die Eingabetaste."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contexto insertado. Añade tu solicitud en el terminal y pulsa Intro."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contexte inséré. Ajoutez votre demande dans le terminal, puis appuyez sur Entrée."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コンテキストを挿入しました。ターミナルで依頼を追記してから Enter を押してください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "맥락을 삽입했습니다. 터미널에서 요청을 덧붙인 뒤 Enter를 누르세요."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已插入内容。请在终端补充要求，再按 Enter。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已插入內容。請在終端機補充要求，再按 Enter。"
+          }
+        }
+      }
+    },
+    "browser.context.pasteFailed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Context could not be inserted. Copy it or make a new selection; it will not be retried automatically."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذر إدراج السياق. انسخه أو حدد محتوى جديدًا؛ لن تتم إعادة المحاولة تلقائيًا."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Kontext konnte nicht eingefügt werden. Kopiere ihn oder wähle erneut aus. Es erfolgt kein automatischer Wiederholungsversuch."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo insertar el contexto. Cópialo o selecciona otro contenido; no se reintentará automáticamente."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’insérer le contexte. Copiez-le ou effectuez une nouvelle sélection ; aucun nouvel essai automatique ne sera effectué."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コンテキストを挿入できませんでした。コピーするか、選択し直してください。自動再試行は行いません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "맥락을 삽입하지 못했습니다. 복사하거나 다시 선택하세요. 자동으로 재시도하지 않습니다."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法插入内容。请复制或重新选择；系统不会自动重试。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法插入內容。請複製或重新選取；系統不會自動重試。"
+          }
+        }
+      }
+    },
+    "browser.context.targetGone": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The agent terminal is no longer available in this workspace. Choose a target or copy the context."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لم تعد طرفية الوكيل متاحة في مساحة العمل هذه. اختر وجهة أو انسخ السياق."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das Agent-Terminal ist in diesem Arbeitsbereich nicht mehr verfügbar. Wähle ein Ziel oder kopiere den Kontext."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El terminal del agente ya no está disponible en este espacio de trabajo. Elige un destino o copia el contexto."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le terminal d’agent n’est plus disponible dans cet espace de travail. Choisissez une destination ou copiez le contexte."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このワークスペースではエージェントターミナルが利用できなくなりました。送信先を選ぶか、コンテキストをコピーしてください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 작업공간에서 에이전트 터미널을 더 이상 사용할 수 없습니다. 대상을 선택하거나 맥락을 복사하세요."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此工作区中的代理终端已不可用。请选择目标或复制内容。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此工作區中的代理終端機已無法使用。請選擇目的地或複製內容。"
+          }
+        }
+      }
+    },
+    "browser.context.tooLarge": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This selection is invalid or exceeds 32 KB. Select a smaller visible element or text."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "هذا التحديد غير صالح أو يتجاوز 32 كيلوبايت. حدد عنصرًا مرئيًا أصغر أو نصًا أقصر."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Auswahl ist ungültig oder überschreitet 32 KB. Wähle ein kleineres sichtbares Element oder einen kürzeren Text."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La selección no es válida o supera los 32 KB. Selecciona un elemento visible más pequeño o un texto más breve."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette sélection est invalide ou dépasse 32 Ko. Sélectionnez un élément visible plus petit ou un texte plus court."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選択内容が無効か、32 KB を超えています。より小さい表示要素またはテキストを選んでください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "선택 내용이 올바르지 않거나 32KB를 초과합니다. 더 작은 화면 요소나 텍스트를 선택하세요."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "所选内容无效或超过 32 KB。请选择较小的可见元素或文本。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選取內容無效或超過 32 KB。請選取較小的可見元素或文字。"
+          }
+        }
+      }
+    },
+    "browser.context.unavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Context selection is available on HTML pages. Reload the page and try again."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يتوفر تحديد السياق في صفحات HTML. أعد تحميل الصفحة وحاول مرة أخرى."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Kontextauswahl ist auf HTML-Seiten verfügbar. Lade die Seite neu und versuche es erneut."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La selección de contexto está disponible en páginas HTML. Recarga la página e inténtalo de nuevo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La sélection de contexte est disponible sur les pages HTML. Rechargez la page et réessayez."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コンテキスト選択は HTML ページで利用できます。ページを再読み込みして、もう一度お試しください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "맥락 선택은 HTML 페이지에서 사용할 수 있습니다. 페이지를 새로고침하고 다시 시도하세요."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内容选择适用于 HTML 页面。请重新加载页面后重试。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "內容選取適用於 HTML 頁面。請重新載入頁面再試一次。"
+          }
+        }
+      }
+    },
+    "browser.context.copy": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy last context"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نسخ آخر سياق"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Letzten Kontext kopieren"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiar el último contexto"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copier le dernier contexte"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "直前のコンテキストをコピー"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "마지막 맥락 복사"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制上次所选内容"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "複製上次選取內容"
+          }
+        }
+      }
+    },
+    "browser.context.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Click an element or drag to select text. Context is pasted without pressing Enter."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "انقر على عنصر أو اسحب لتحديد نص. يُلصق السياق دون الضغط على Enter."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klicke auf ein Element oder ziehe, um Text auszuwählen. Der Kontext wird ohne Drücken der Eingabetaste eingefügt."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Haz clic en un elemento o arrastra para seleccionar texto. El contexto se pega sin pulsar Intro."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cliquez sur un élément ou faites glisser pour sélectionner du texte. Le contexte est collé sans appuyer sur Entrée."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要素をクリックするか、ドラッグしてテキストを選択します。Enter を押さずにコンテキストを貼り付けます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "요소를 클릭하거나 드래그해 텍스트를 선택하세요. 맥락은 Enter 전송 없이 붙여넣습니다."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点击元素或拖动选择文本。内容会粘贴，但不会按下 Enter。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按一下元素或拖曳選取文字。內容會貼上，但不會按下 Enter。"
+          }
+        }
+      }
+    },
+    "browser.context.noAgents": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No agent terminal was detected in this workspace. Start an agent here, then try again."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لم يتم اكتشاف طرفية وكيل في مساحة العمل هذه. شغّل وكيلًا هنا، ثم حاول مرة أخرى."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In diesem Arbeitsbereich wurde kein Agent-Terminal erkannt. Starte hier einen Agenten und versuche es erneut."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se detectó ningún terminal de agente en este espacio de trabajo. Inicia un agente aquí e inténtalo de nuevo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun terminal d’agent détecté dans cet espace de travail. Démarrez un agent ici, puis réessayez."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このワークスペースでエージェントターミナルが見つかりません。ここでエージェントを起動してから、もう一度お試しください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 작업공간에서 에이전트 터미널을 찾지 못했습니다. 여기서 에이전트를 시작한 뒤 다시 시도하세요."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此工作区未检测到代理终端。请先在此启动代理，然后重试。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此工作區未偵測到代理終端機。請先在此啟動代理，再試一次。"
+          }
+        }
+      }
+    },
+    "browser.context.target": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Context destination"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "وجهة السياق"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kontextziel"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Destino del contexto"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Destination du contexte"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コンテキストの送信先"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "맥락 전달 대상"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内容目标"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "內容目的地"
+          }
+        }
+      }
+    },
+    "browser.context.toggle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select context for agent terminal"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تحديد سياق لطرفية الوكيل"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kontext für Agent-Terminal auswählen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seleccionar contexto para el terminal del agente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélectionner du contexte pour le terminal d’agent"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "エージェントターミナル用のコンテキストを選択"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "에이전트 터미널에 전달할 맥락 선택"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "为代理终端选择内容"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "為代理終端機選取內容"
           }
         }
       }
