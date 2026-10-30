@@ -5489,6 +5489,10 @@ final class Workspace: Identifiable, ObservableObject, FilePreviewTabMetadataHos
         preferredBrowserProfileID = profileID
     }
 
+    func quickLaunchProfileID() -> UUID {
+        resolvedNewBrowserProfileID(sourcePanelId: focusedPanelId)
+    }
+
     private func resolvedNewBrowserProfileID(
         preferredProfileID: UUID? = nil,
         sourcePanelId: UUID? = nil

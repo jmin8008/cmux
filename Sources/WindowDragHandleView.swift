@@ -833,6 +833,7 @@ private func minimalModeTrafficLightFrameInContentCoordinates(for window: NSWind
 enum MinimalModeSidebarControlActionSlot: Int, CaseIterable {
     case toggleSidebar
     case showNotifications
+    case quickLaunch
     case newTab
     case newWorkspaceMenu
     case focusHistoryBack
@@ -844,6 +845,8 @@ enum MinimalModeSidebarControlActionSlot: Int, CaseIterable {
             return "titlebarControl.toggleSidebar"
         case .showNotifications:
             return "titlebarControl.showNotifications"
+        case .quickLaunch:
+            return "titlebarControl.quickLaunch"
         case .newTab:
             return "titlebarControl.newTab"
         case .newWorkspaceMenu:
@@ -861,6 +864,8 @@ enum MinimalModeSidebarControlActionSlot: Int, CaseIterable {
             return String(localized: "titlebar.sidebar.accessibilityLabel", defaultValue: "Toggle Sidebar")
         case .showNotifications:
             return String(localized: "titlebar.notifications.accessibilityLabel", defaultValue: "Notifications")
+        case .quickLaunch:
+            return String(localized: "quickLaunch.title", defaultValue: "Quick Launch")
         case .newTab:
             return String(localized: "titlebar.newWorkspace.accessibilityLabel", defaultValue: "New Workspace")
         case .newWorkspaceMenu:
@@ -878,6 +883,8 @@ enum MinimalModeSidebarControlActionSlot: Int, CaseIterable {
             return "toggleSidebar"
         case .showNotifications:
             return "showNotifications"
+        case .quickLaunch:
+            return "quickLaunch"
         case .newTab:
             return "newTab"
         case .newWorkspaceMenu:
@@ -893,7 +900,7 @@ enum MinimalModeSidebarControlActionSlot: Int, CaseIterable {
         switch self {
         case .toggleSidebar, .newTab, .newWorkspaceMenu, .focusHistoryBack, .focusHistoryForward:
             return true
-        case .showNotifications:
+        case .showNotifications, .quickLaunch:
             return false
         }
     }

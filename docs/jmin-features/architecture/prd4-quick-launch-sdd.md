@@ -136,3 +136,7 @@ flowchart LR
 - [ADR-0004](../decisions/0004-local-quick-launch-registry.md)
 - [기능 문서 색인](../INDEX.md)
 - [포크 개발 가이드](../../jmin-development.md)
+
+## 2026-10-29 구현 기록
+
+사용자의 병렬 구현 요청에 따라 `codex/quick-launch`에서 구현했다. [구현·검증 기록](../implementation/quick-launch-handoff.md)에 선택한 UI, 저장 schema, 재사용 우선순위, 로컬 workspace 범위 및 미완료 네이티브 검증을 기록했다. 위 초안의 `icon` 객체는 1차 구현에서 허용된 SF Symbol 이름의 `symbol` 필드로 구체화했다. 앱 대상은 URL과 bundleIdentifier 및 선택적 bookmark를 저장한다.

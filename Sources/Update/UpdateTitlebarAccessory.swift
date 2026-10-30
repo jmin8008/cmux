@@ -265,6 +265,7 @@ func titlebarControlPressedScale(isPressed _: Bool) -> CGFloat {
 
 final class TitlebarControlsViewModel: ObservableObject {
     weak var notificationsAnchorView: NSView?
+    weak var quickLaunchAnchorView: NSView?
 }
 
 @MainActor
@@ -1179,6 +1180,21 @@ struct TitlebarControlsView: View {
             .background(NotificationsAnchorView { viewModel.notificationsAnchorView = $0 })
             .safeHelp(KeyboardShortcutSettings.Action.showNotifications.tooltip(String(localized: "titlebar.notifications.tooltip", defaultValue: "Show notifications")))
 
+            TitlebarControlButton(
+                config: config,
+                foregroundColor: foregroundColor,
+                accessibilityIdentifier: "titlebarControl.quickLaunch",
+                accessibilityLabel: String(localized: "quickLaunch.title", defaultValue: "Quick Launch"),
+                action: {
+                    if let anchor = viewModel.quickLaunchAnchorView { QuickLaunchPresenter.shared.show(anchor: anchor) }
+                }
+            ) {
+                iconLabel(systemName: "square.grid.2x2", config: config, foregroundColor: foregroundColor,
+                          iconGeometryKeyPrefix: "titlebarControl_quickLaunchIcon")
+            }
+            .background(QuickLaunchAnchorView { viewModel.quickLaunchAnchorView = $0 })
+            .safeHelp(String(localized: "quickLaunch.title", defaultValue: "Quick Launch"))
+
             TitlebarNewWorkspaceSplitButton(
                 config: config,
                 foregroundColor: foregroundColor,
@@ -1630,6 +1646,8 @@ struct HiddenTitlebarSidebarControlsView: View {
                     onToggleSidebar()
                 case .showNotifications:
                     onToggleNotifications(anchorView)
+                case .quickLaunch:
+                    QuickLaunchPresenter.shared.show(anchor: anchorView)
                 case .newTab:
                     onNewTab()
                 case .newWorkspaceMenu:

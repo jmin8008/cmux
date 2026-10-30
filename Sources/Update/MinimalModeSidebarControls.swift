@@ -44,7 +44,8 @@ enum TitlebarControlsHitRegions {
         let startX = outerLeadingPadding + config.groupPadding.leading
         let sidebarX = startX
         let notificationsX = sidebarX + config.buttonSize + config.spacing
-        let newTabX = notificationsX + config.buttonSize + config.spacing
+        let quickLaunchX = notificationsX + config.buttonSize + config.spacing
+        let newTabX = quickLaunchX + config.buttonSize + config.spacing
         let newTabWidth = TitlebarNewWorkspaceSplitButtonMetrics.primaryWidth(config: config)
         let newWorkspaceMenuX = newTabX + newTabWidth
         let newWorkspaceMenuWidth = TitlebarNewWorkspaceSplitButtonMetrics.dropdownWidth(config: config)
@@ -56,6 +57,8 @@ enum TitlebarControlsHitRegions {
             sidebarX
         case .showNotifications:
             notificationsX
+        case .quickLaunch:
+            quickLaunchX
         case .newTab:
             newTabX
         case .newWorkspaceMenu:
@@ -70,7 +73,7 @@ enum TitlebarControlsHitRegions {
             newTabWidth
         case .newWorkspaceMenu:
             newWorkspaceMenuWidth
-        case .toggleSidebar, .showNotifications, .focusHistoryBack, .focusHistoryForward:
+        case .toggleSidebar, .showNotifications, .quickLaunch, .focusHistoryBack, .focusHistoryForward:
             config.buttonSize
         }
         return minX...(minX + width)
@@ -240,7 +243,7 @@ final class MinimalModeSidebarControlActionView: NSView {
             _ = AppDelegate.shared?.showFocusHistoryContextMenu(anchorView: self, event: event, direction: .back)
         case .focusHistoryForward:
             _ = AppDelegate.shared?.showFocusHistoryContextMenu(anchorView: self, event: event, direction: .forward)
-        case .showNotifications:
+        case .showNotifications, .quickLaunch:
             super.rightMouseDown(with: event)
         }
     }
