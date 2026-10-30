@@ -86,3 +86,20 @@ Observed:
 Evidence: `/tmp/cmux-context-native-acceptance-input.json` retains all three received contexts and raw byte boundaries; `/tmp/cmux-context-input-probe.py` is the disposable recorder. The recorder process and `codex.context-qa` PID registration were removed, and only the disposable QA workspace was closed. The development app remains usable.
 
 Not exercised natively in this pass: two-agent target ambiguity, target closure/movement during an in-flight capture, scroll/zoom coordinates, image/size rejection, and Design Mode/React Grab mutual exclusion. Existing focused model/runtime tests cover their stated subsets; no full native acceptance matrix is claimed.
+
+## Native boundary verification — 2026-10-30
+
+Build under test: `03535d3566` (tag `jmin-context`). `xcodebuild` reported `** BUILD SUCCEEDED **`, `ping` returned `PONG`, app PID 81940. Fixture: local HTML at `127.0.0.1:18766` with a scrolled button, an image, an input, a 56 KB paragraph and an iframe; terminals were disposable raw-PTY recorders or plain shells whose agent ownership was registered through the `set_agent_pid` socket path. Evidence is under `/private/tmp/claude-501/-Users-jgy-workplace-tmp/90cb5139-417c-4c6c-a51f-9a769a1f42c5/scratchpad/prd1/` (`shots/`, `agentA.json`, `agentB.json`, `probe.py`, `cnt.sh`).
+
+Observed:
+
+- Two-agent ambiguity: with two registered agent terminals and no input recency, arming the picker did not arm. A destination popover listed both terminals and asked the user to choose; choosing one armed the picker with a visible destination chip (`shots/ambiguity-destination-popover.png`, `shots/ambiguity-after-choose-armed.png`).
+- Design Mode and picker are mutually exclusive in both directions: enabling Design Mode through the CLI returned the toolbar to the unarmed state; pressing the picker toggle (accessibility press) while Design Mode was active set Design Mode to `disabled` and armed the picker.
+- React Grab and picker are mutually exclusive in both directions: toggling React Grab returned the toolbar to the unarmed state; pressing the picker toggle then made `window.__REACT_GRAB__.isActive()` false and armed the picker. The fixture is not a React page; only the Grab runtime's active flag was checked.
+- Destination ranking in a two-agent workspace: the picker armed with a pointer click delivered to the terminal that had received socket-sent startup text, not to the other registered agent. This is consistent with input-recency ranking but was not isolated; a later socket `send` to the other terminal did not change the destination for an already-armed picker.
+
+Not observed (blocked): scroll/zoom coordinates, image click and 32 KB size rejection, target closure or movement during an in-flight capture, stale-capture drop. These need trusted pointer events; the picker requires `event.isTrusted`. Midway through this pass the user's foreground Chrome Space covered the cmux window, and the automation tool refused pixel dispatch. One foreground-mode retry landed on that Chrome window instead of cmux; no further pointer input was sent. These boundaries therefore remain covered only by the model/runtime tests listed above and `62bd880c52`/`2a8c297550`/`03535d3566`.
+
+Unresolved: after what were believed to be two pointer clicks on the same button, the recorder received three identical element pastes (`agentB.json`). The extra paste could not be attributed (a retry, a stray pointer event while the toolbar state was changing, or a double delivery) and was not reproduced under control. It should be rechecked with one click and a counter before claiming once-per-gesture natively.
+
+No product defect was confirmed, so no regression test or fix commit was added. Disposable workspaces, recorder processes, sleep processes and the fixture server were removed. The `jmin-context` app (PID 81940) was left running.
