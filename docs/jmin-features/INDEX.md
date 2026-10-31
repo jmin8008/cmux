@@ -1,9 +1,10 @@
 # INDEX — cmux 문서
 
-> 생성물. 손으로 고치지 않는다 → `docs-index.py` (또는 `/bnx-dev-plan-change`). 갱신 2026-10-29. 규약: `bnx-dev-contract-guide`.
+> 생성물. 손으로 고치지 않는다 → `docs-index.py` (또는 `/bnx-dev-plan-change`). 갱신 2026-10-31. 규약: `bnx-dev-contract-guide`.
 
 ## 📌 핸드오프 (최근 3)
-- (없음)
+- [핸드오프 — 통합 앱(jmin-all)과 상류 PR 상태, 사내 대시보드 백본 전환 (2026-10-31)](implementation/2026-10-31-dashboard-backbone-handoff.md) — PRD1·2·4를 합친 `codex/integration`이 `jmin-all` 앱으로 빌드·실행 중이고, PRD2는 상류 PR 2건(bonsplit#294 → cmux#28191)으로 나가 있다. PRD1 드래그 선택이 블록 전체로 전달되는 결함과 CLA 서명이 남았고, 다음 작업은 이 브랜치를 백본으로 한 사내 대시보드다. 대상: 다음 세션(실행). · 2026-10-31 · active
+- [핸드오프 — cmux 포크 개발과 남은 네이티브 검증 (2026-10-29)](implementation/2026-10-29-development-handoff.md) — 개발 환경·격리·V 로고와 4개 기능 코드를 준비했고, 설정 경고를 해결했다. 앱 바로가기 실행 오류와 창 분리·에이전트 화면의 수정 후 네이티브 검증이 남았다. 대상: 다음 작업자(실행). · 2026-10-29 · active
 
 ## 📋 PRD
 - (없음)
@@ -34,13 +35,18 @@
 - `agent-workspace` (2): [PRD3 한 작업 화면에서 에이전트 대화와 ](architecture/prd3-agent-workspace-sdd.md) · [ADR-0003 에이전트 그룹 화면과 실행 ](decisions/0003-agent-group-view-and-session-ownership.md)
 - `architecture` (4): [PRD1 화면 선택 맥락을 터미널로 전달하는](architecture/prd1-browser-context-sdd.md) · [PRD2 패널을 창 밖으로 끌어 새 창으로 ](architecture/prd2-drag-out-window-sdd.md) · [PRD3 한 작업 화면에서 에이전트 대화와 ](architecture/prd3-agent-workspace-sdd.md) · [PRD4 알림과 추가 버튼 사이의 앱·웹 바](architecture/prd4-quick-launch-sdd.md)
 - `browser-context` (2): [PRD1 화면 선택 맥락을 터미널로 전달하는](architecture/prd1-browser-context-sdd.md) · [ADR-0001 화면 선택 맥락을 명시적인 ](decisions/0001-browser-context-handoff.md)
+- `dashboard-backbone` (1): [핸드오프 — 통합 앱(jmin-all)과 상](implementation/2026-10-31-dashboard-backbone-handoff.md)
 - `decision` (4): [ADR-0001 화면 선택 맥락을 명시적인 ](decisions/0001-browser-context-handoff.md) · [ADR-0002 창 밖 드롭은 같은 프로세스](decisions/0002-live-panel-window-transfer.md) · [ADR-0003 에이전트 그룹 화면과 실행 ](decisions/0003-agent-group-view-and-session-ownership.md) · [ADR-0004 바로가기는 사용자 설정의 t](decisions/0004-local-quick-launch-registry.md)
-- `jmin-fork` (8): [PRD1 화면 선택 맥락을 터미널로 전달하는](architecture/prd1-browser-context-sdd.md) · [PRD2 패널을 창 밖으로 끌어 새 창으로 ](architecture/prd2-drag-out-window-sdd.md) · [PRD3 한 작업 화면에서 에이전트 대화와 ](architecture/prd3-agent-workspace-sdd.md) · [PRD4 알림과 추가 버튼 사이의 앱·웹 바](architecture/prd4-quick-launch-sdd.md) · [ADR-0001 화면 선택 맥락을 명시적인 ](decisions/0001-browser-context-handoff.md) · [ADR-0002 창 밖 드롭은 같은 프로세스](decisions/0002-live-panel-window-transfer.md)
+- `handoff` (2): [핸드오프 — 통합 앱(jmin-all)과 상](implementation/2026-10-31-dashboard-backbone-handoff.md) · [핸드오프 — cmux 포크 개발과 남은 네이](implementation/2026-10-29-development-handoff.md)
+- `integration` (1): [핸드오프 — 통합 앱(jmin-all)과 상](implementation/2026-10-31-dashboard-backbone-handoff.md)
+- `jmin-fork` (10): [핸드오프 — 통합 앱(jmin-all)과 상](implementation/2026-10-31-dashboard-backbone-handoff.md) · [PRD1 화면 선택 맥락을 터미널로 전달하는](architecture/prd1-browser-context-sdd.md) · [PRD2 패널을 창 밖으로 끌어 새 창으로 ](architecture/prd2-drag-out-window-sdd.md) · [PRD3 한 작업 화면에서 에이전트 대화와 ](architecture/prd3-agent-workspace-sdd.md) · [PRD4 알림과 추가 버튼 사이의 앱·웹 바](architecture/prd4-quick-launch-sdd.md) · [ADR-0001 화면 선택 맥락을 명시적인 ](decisions/0001-browser-context-handoff.md)
+- `native-validation` (1): [핸드오프 — cmux 포크 개발과 남은 네이](implementation/2026-10-29-development-handoff.md)
 - `prd1` (2): [PRD1 화면 선택 맥락을 터미널로 전달하는](architecture/prd1-browser-context-sdd.md) · [ADR-0001 화면 선택 맥락을 명시적인 ](decisions/0001-browser-context-handoff.md)
 - `prd2` (2): [PRD2 패널을 창 밖으로 끌어 새 창으로 ](architecture/prd2-drag-out-window-sdd.md) · [ADR-0002 창 밖 드롭은 같은 프로세스](decisions/0002-live-panel-window-transfer.md)
 - `prd3` (2): [PRD3 한 작업 화면에서 에이전트 대화와 ](architecture/prd3-agent-workspace-sdd.md) · [ADR-0003 에이전트 그룹 화면과 실행 ](decisions/0003-agent-group-view-and-session-ownership.md)
 - `prd4` (2): [PRD4 알림과 추가 버튼 사이의 앱·웹 바](architecture/prd4-quick-launch-sdd.md) · [ADR-0004 바로가기는 사용자 설정의 t](decisions/0004-local-quick-launch-registry.md)
 - `quick-launch` (2): [PRD4 알림과 추가 버튼 사이의 앱·웹 바](architecture/prd4-quick-launch-sdd.md) · [ADR-0004 바로가기는 사용자 설정의 t](decisions/0004-local-quick-launch-registry.md)
+- `upstream-pr` (1): [핸드오프 — 통합 앱(jmin-all)과 상](implementation/2026-10-31-dashboard-backbone-handoff.md)
 - `window-transfer` (2): [PRD2 패널을 창 밖으로 끌어 새 창으로 ](architecture/prd2-drag-out-window-sdd.md) · [ADR-0002 창 밖 드롭은 같은 프로세스](decisions/0002-live-panel-window-transfer.md)
 
 <!-- index:manual:start -->
@@ -81,7 +87,3 @@
 - 문서에 표시한 UI 문구는 제안이며 제품 문자열을 추가하지 않았다. 실제 구현에서 native/web localization audit을 수행한다. 진행 중인 다른 코드 변경을 포함하는 광범위한 자동 localization 작업은 이 문서 작업에서 실행하지 않았다.
 - PRD1: 대상 표시/변경과 모호한 후보 처리, 텍스트 상한·gesture 판정. PRD2: provider별 transfer 지원과 특수 drop 대상. PRD3: 상세의 아래/옆 배치, Brain과의 정확한 대응, provider capability·native group host. PRD4: 등록 폼·기본 열 위치·재사용 후보 선택의 세부사항. 상세는 각 SDD의 남은 설계·검증 항목에 있다.
 <!-- index:manual:end -->
-
-## 병렬 구현 상태
-
-[브랜치·개발 환경·검증 대기 항목](implementation/STATUS.md)에 현재 로컬 구현 상태와 Xcode 설치 제약을 기록한다.
